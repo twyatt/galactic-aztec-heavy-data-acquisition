@@ -1,40 +1,10 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
 apply plugin: 'application'
 
-sourceSets {
-    main {
-        java {
-            srcDirs = ["src"]
-        }
-    }
-}
+mainClassName = 'edu.sdsu.rocket.log2csv.Launcher'
 
 dependencies {
-    compile "au.com.bytecode:opencsv:2.4"
-}
-
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
-// http://www.gradle.org/docs/current/userguide/application_plugin.html
-mainClassName = "edu.sdsu.rocket.log2csv.Launcher"
-
-eclipse {
-    project {
-        name = appName + "-log2csv"
-    }
-}
-
-jar {
-    baseName = 'log2csv'
-    version = '1.0'
+    compile project(':core')
     
-    manifest {
-        attributes 'Main-Class': mainClassName
-    }
-}
-
-tasks.eclipse.doLast {
-    delete ".project"
+    compile 'au.com.bytecode:opencsv:2.4'
 }

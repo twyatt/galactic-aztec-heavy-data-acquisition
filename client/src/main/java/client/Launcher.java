@@ -14,7 +14,7 @@ import client.main.MainController;
 
 public class Launcher extends Application {
 
-	private static final String NAME = "Data Acquisition Client";
+	public static final String NAME = "Data Acquisition Client";
 
 	@Override
 	public void start(Stage stage) throws Exception {

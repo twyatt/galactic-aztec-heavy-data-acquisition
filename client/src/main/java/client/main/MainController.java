@@ -1,12 +1,17 @@
 package client.main;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.text.DecimalFormat;
-import java.text.Format;
-import java.util.ArrayList;
-import java.util.List;
-
+import client.Launcher;
+import com.badlogic.gdx.math.Vector3;
+import com.lynden.gmapsfx.GoogleMapView;
+import com.lynden.gmapsfx.MapComponentInitializedListener;
+import com.lynden.gmapsfx.javascript.object.*;
+import edu.sdsu.rocket.core.models.Pressures;
+import edu.sdsu.rocket.core.models.Sensors;
+import edu.sdsu.rocket.core.net.SensorClient;
+import edu.sdsu.rocket.core.net.SensorClient.Mode;
+import eu.hansolo.enzo.common.Section;
+import eu.hansolo.enzo.gauge.Gauge;
+import eu.hansolo.enzo.gauge.GaugeBuilder;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -17,40 +22,20 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Series;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.paint.Color;
 
-import org.controlsfx.control.action.Action;
-import org.controlsfx.dialog.Dialog;
-import org.controlsfx.dialog.Dialogs;
-
-import com.badlogic.gdx.math.Vector3;
-import com.lynden.gmapsfx.GoogleMapView;
-import com.lynden.gmapsfx.MapComponentInitializedListener;
-import com.lynden.gmapsfx.javascript.object.GoogleMap;
-import com.lynden.gmapsfx.javascript.object.LatLong;
-import com.lynden.gmapsfx.javascript.object.MapOptions;
-import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
-import com.lynden.gmapsfx.javascript.object.Marker;
-import com.lynden.gmapsfx.javascript.object.MarkerOptions;
-
-import edu.sdsu.rocket.core.models.Pressures;
-import edu.sdsu.rocket.core.models.Sensors;
-import edu.sdsu.rocket.core.net.SensorClient;
-import edu.sdsu.rocket.core.net.SensorClient.Mode;
-import eu.hansolo.enzo.common.Section;
-import eu.hansolo.enzo.gauge.Gauge;
-import eu.hansolo.enzo.gauge.GaugeBuilder;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.text.DecimalFormat;
+import java.text.Format;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @SuppressWarnings("deprecation")
 public class MainController {
@@ -112,22 +97,22 @@ public class MainController {
 	private static final int BAROMETER_DATA_POINTS     = 50;
 	
 	private NumberAxis accelerometerX;
-	private Series<Number, Number> accelerometerXData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> accelerometerYData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> accelerometerZData = new XYChart.Series<Number, Number>();
+	private Series<Number, Number> accelerometerXData = new XYChart.Series<>();
+	private Series<Number, Number> accelerometerYData = new XYChart.Series<>();
+	private Series<Number, Number> accelerometerZData = new XYChart.Series<>();
 	
 	private NumberAxis gyroscopeX;
-	private Series<Number, Number> gyroscopeXData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> gyroscopeYData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> gyroscopeZData = new XYChart.Series<Number, Number>();
+	private Series<Number, Number> gyroscopeXData = new XYChart.Series<>();
+	private Series<Number, Number> gyroscopeYData = new XYChart.Series<>();
+	private Series<Number, Number> gyroscopeZData = new XYChart.Series<>();
 	
 	private NumberAxis magnetometerX;
-	private Series<Number, Number> magnetometerXData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> magnetometerYData = new XYChart.Series<Number, Number>();
-	private Series<Number, Number> magnetometerZData = new XYChart.Series<Number, Number>();
+	private Series<Number, Number> magnetometerXData = new XYChart.Series<>();
+	private Series<Number, Number> magnetometerYData = new XYChart.Series<>();
+	private Series<Number, Number> magnetometerZData = new XYChart.Series<>();
 	
 	private NumberAxis barometerX;
-	private Series<Number, Number> barometerPressureData = new XYChart.Series<Number, Number>();
+	private Series<Number, Number> barometerPressureData = new XYChart.Series<>();
 	
 	double localAltitudeZero = Double.NaN;
 	double remoteAltitudeZero = Double.NaN;
@@ -524,10 +509,10 @@ public class MainController {
 
 	private void updatePressures(Sensors sensors) {
 		if (DEBUG_SENSORS) {
-			motor.setValue(sensors.analog.getA0());
-			lox.setValue(sensors.analog.getA1());
-			kerosene.setValue(sensors.analog.getA2());
-			helium.setValue(sensors.analog.getA3());
+			motor.setValue(sensors.analog.get(0));
+			lox.setValue(sensors.analog.get(1));
+			kerosene.setValue(sensors.analog.get(2));
+			helium.setValue(sensors.analog.get(3));
 		} else {
 			motor.setValue(sensors.pressures.getMotor());
 			lox.setValue(sensors.pressures.getLOX());
@@ -568,11 +553,12 @@ public class MainController {
 				connectButton.setText(DISCONNECT);
 			} catch (IOException e) {
 				e.printStackTrace();
-				Dialogs.create()
-					.title("Connect")
-					.masthead("Failed to connect.")
-					.message(e.toString())
-					.showException(e);
+
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle(Launcher.NAME);
+                alert.setHeaderText("Failed to connect.");
+                alert.setContentText(e.toString());
+                alert.showAndWait();
 			}
 		} else {
 			pingThread.interrupt();
@@ -751,12 +737,13 @@ public class MainController {
 	 * @return
 	 */
 	public boolean requestQuit() {
-		Action response = Dialogs.create()
-			.title("Quit")
-			.masthead("Are you sure you want to quit?")
-			.actions(Dialog.ACTION_CANCEL, Dialog.ACTION_YES)
-			.showConfirm();
-		return response == Dialog.ACTION_YES;
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(Launcher.NAME);
+        alert.setHeaderText("Quit");
+        alert.setContentText("Are you sure you want to quit?");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
 	}
 
 }
