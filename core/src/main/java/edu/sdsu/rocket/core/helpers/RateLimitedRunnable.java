@@ -9,7 +9,7 @@ public abstract class RateLimitedRunnable implements Runnable {
 	private long sleep_ms;
 	private long sleep_ns;
 
-	private Object lock = new Object();
+	private final Object lock = new Object();
 	private boolean isPaused;
 
 	private boolean isRunning = true;

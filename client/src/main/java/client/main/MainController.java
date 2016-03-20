@@ -8,7 +8,6 @@ import com.lynden.gmapsfx.javascript.object.*;
 import edu.sdsu.rocket.core.models.Pressures;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorClient;
-import edu.sdsu.rocket.core.net.SensorClient.Mode;
 import eu.hansolo.enzo.common.Section;
 import eu.hansolo.enzo.gauge.Gauge;
 import eu.hansolo.enzo.gauge.GaugeBuilder;
@@ -54,18 +53,14 @@ public class MainController {
 	private static final String DISCONNECT = "Disconnect";
 	
 	private static final int PORT = 4444;
-	private final Sensors local = new Sensors();
-	private final Sensors remote = new Sensors();
-	private final SensorClient client = new SensorClient(local, remote);
+	private final Sensors sensors = new Sensors();
+	private final SensorClient client = new SensorClient(sensors);
 	private Thread pingThread;
 	
 	@FXML private TextField hostTextField;
 	@FXML private Button connectButton;
 	@FXML private Slider frequencySlider;
 	@FXML private Label frequencyLabel;
-	@FXML private ToggleGroup sensorsGroup;
-	@FXML private ToggleButton localButton;
-	@FXML private ToggleButton remoteButton;
 	@FXML private Label latencyLabel;
 	@FXML private Label signalLabel;
 	@FXML private Label gpsFixLabel;
@@ -74,14 +69,10 @@ public class MainController {
 	@FXML private FlowPane gaugePane;
 	@FXML private BorderPane gpsBorderPane;
 	
-	@FXML private Label localLatitudeLabel;
-	@FXML private Label localLongitudeLabel;
-	@FXML private Label localAltitudeLabel;
-	@FXML private Button zeroLocalAltitudeButton;
-	@FXML private Label remoteLatitudeLabel;
-	@FXML private Label remoteLongitudeLabel;
-	@FXML private Label remoteAltitudeLabel;
-	@FXML private Button zeroRemoteAltitudeButton;
+	@FXML private Label latitudeLabel;
+	@FXML private Label longitudeLabel;
+	@FXML private Label altitudeLabel;
+	@FXML private Button zeroAltitudeButton;
 	
 	private GoogleMap map;
 	
@@ -114,9 +105,8 @@ public class MainController {
 	private NumberAxis barometerX;
 	private Series<Number, Number> barometerPressureData = new XYChart.Series<>();
 	
-	double localAltitudeZero = Double.NaN;
-	double remoteAltitudeZero = Double.NaN;
-	
+	double altitudeZero = Double.NaN;
+
 	private static final Format LATENCY_FORMAT = new DecimalFormat("#.#");
 	private static final Format ALTITUDE_FORMAT = new DecimalFormat("#.##");
 	
@@ -271,7 +261,7 @@ public class MainController {
 	}
 
 	private LineChart<Number, Number> makeChart(String title, NumberAxis x, NumberAxis y) {
-		LineChart<Number, Number> chart = new LineChart<Number, Number>(x, y);
+		LineChart<Number, Number> chart = new LineChart<>(x, y);
 		chart.setTitle(title);
 		chart.setCreateSymbols(false);
 		chart.setAnimated(false);
@@ -305,15 +295,6 @@ public class MainController {
 	
 	@FXML
 	public void clearSensors() {
-		SensorClient.Mode mode;
-		Toggle selected = sensorsGroup.getSelectedToggle();
-		if (remoteButton.equals(selected)) {
-			mode = Mode.BOTH;
-		} else {
-			mode = Mode.LOCAL;
-		}
-		client.setMode(mode);
-		
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -338,25 +319,14 @@ public class MainController {
 				gpsSatellitesLabel.setText("?");
 				powerLabel.setText("?");
 				
-				localLatitudeLabel.setText("?");
-				localLongitudeLabel.setText("?");
-				localAltitudeLabel.setText("?");
-				remoteLatitudeLabel.setText("?");
-				remoteLongitudeLabel.setText("?");
-				remoteAltitudeLabel.setText("?");
+				latitudeLabel.setText("?");
+				longitudeLabel.setText("?");
+				altitudeLabel.setText("?");
 			}
 		});
 	}
 	
 	public void updateSensors() {
-		Sensors sensors;
-		Toggle selected = sensorsGroup.getSelectedToggle();
-		if (remoteButton.equals(selected)) {
-			sensors = remote;
-		} else {
-			sensors = local;
-		}
-		
 		// toolbar
 		updateSignalStrength();
 		updateGPSToolbar(sensors);
@@ -377,11 +347,11 @@ public class MainController {
 	}
 
 	private void updateSignalStrength() {
-		if (local.radio.getSignalStrength() == 0) {
+		if (sensors.radio.getSignalStrength() == 0) {
 			signalLabel.setText("?");
 		} else {
 			try {
-				signalLabel.setText("-" + local.radio.getSignalStrength());
+				signalLabel.setText("-" + sensors.radio.getSignalStrength());
 			} catch (IllegalArgumentException e) {
 				System.err.println("Failed to format signal strength value for display: " + e);
 			}
@@ -406,29 +376,17 @@ public class MainController {
 	private void updateGPS() {
 		String postfix;
 		
-		double localAltitudeMeters = local.gps.getAltitude();
-		if (Double.isNaN(localAltitudeZero)) {
+		double altitudeMeters = sensors.gps.getAltitude();
+		if (Double.isNaN(altitudeZero)) {
 			postfix = "MSL";
 		} else {
-			localAltitudeMeters -= localAltitudeZero;
+			altitudeMeters -= altitudeZero;
 			postfix = "AGL";
 		}
-		double localAltitudeFeet = localAltitudeMeters / 0.3048f;
-		localLatitudeLabel.setText(""+local.gps.getLatitude());
-		localLongitudeLabel.setText(""+local.gps.getLongitude());
-		localAltitudeLabel.setText(ALTITUDE_FORMAT.format(localAltitudeMeters) + " m (" + ALTITUDE_FORMAT.format(localAltitudeFeet) + " ft) " + postfix);
-		
-		double remoteAltitudeMeters = remote.gps.getAltitude();
-		if (Double.isNaN(remoteAltitudeZero)) {
-			postfix = "MSL";
-		} else {
-			remoteAltitudeMeters -= remoteAltitudeZero;
-			postfix = "AGL";
-		}
-		double remoteAltitudeFeet = remoteAltitudeMeters / 0.3048f;
-		remoteLatitudeLabel.setText(""+remote.gps.getLatitude());
-		remoteLongitudeLabel.setText(""+remote.gps.getLongitude());
-		remoteAltitudeLabel.setText(ALTITUDE_FORMAT.format(remoteAltitudeMeters) + " m (" + ALTITUDE_FORMAT.format(remoteAltitudeFeet) + " ft) " + postfix);
+		double altitudeFeet = altitudeMeters / 0.3048f;
+		latitudeLabel.setText(""+ sensors.gps.getLatitude());
+		longitudeLabel.setText(""+ sensors.gps.getLongitude());
+		altitudeLabel.setText(ALTITUDE_FORMAT.format(altitudeMeters) + " m (" + ALTITUDE_FORMAT.format(altitudeFeet) + " ft) " + postfix);
 	}
 	
 	private void updatePower(Sensors sensors) {
@@ -446,7 +404,7 @@ public class MainController {
 		while (barometerPressureData.getData().size() >= BAROMETER_DATA_POINTS) {
 			barometerPressureData.getData().remove(0);
 		}
-		barometerPressureData.getData().add(new XYChart.Data<Number, Number>(chartIndex, pressure));
+		barometerPressureData.getData().add(new XYChart.Data<>(chartIndex, pressure));
 	}
 
 	private void updateMagnetometer(Sensors sensors) {
@@ -463,9 +421,9 @@ public class MainController {
 		while (magnetometerZData.getData().size() >= MAGNETOMETER_DATA_POINTS) {
 			magnetometerZData.getData().remove(0);
 		}
-		magnetometerXData.getData().add(new XYChart.Data<Number, Number>(chartIndex, magnetometer.x));
-		magnetometerYData.getData().add(new XYChart.Data<Number, Number>(chartIndex, magnetometer.y));
-		magnetometerZData.getData().add(new XYChart.Data<Number, Number>(chartIndex, magnetometer.z));
+		magnetometerXData.getData().add(new XYChart.Data<>(chartIndex, magnetometer.x));
+		magnetometerYData.getData().add(new XYChart.Data<>(chartIndex, magnetometer.y));
+		magnetometerZData.getData().add(new XYChart.Data<>(chartIndex, magnetometer.z));
 	}
 
 	private void updateGyroscope(Sensors sensors) {
@@ -482,9 +440,9 @@ public class MainController {
 		while (gyroscopeZData.getData().size() >= GYROSCOPE_DATA_POINTS) {
 			gyroscopeZData.getData().remove(0);
 		}
-		gyroscopeXData.getData().add(new XYChart.Data<Number, Number>(chartIndex, gyroscope.x));
-		gyroscopeYData.getData().add(new XYChart.Data<Number, Number>(chartIndex, gyroscope.y));
-		gyroscopeZData.getData().add(new XYChart.Data<Number, Number>(chartIndex, gyroscope.z));
+		gyroscopeXData.getData().add(new XYChart.Data<>(chartIndex, gyroscope.x));
+		gyroscopeYData.getData().add(new XYChart.Data<>(chartIndex, gyroscope.y));
+		gyroscopeZData.getData().add(new XYChart.Data<>(chartIndex, gyroscope.z));
 	}
 
 	private void updateAccelerometer(Sensors sensors) {
@@ -502,9 +460,9 @@ public class MainController {
 		while (accelerometerZData.getData().size() >= ACCELEROMETER_DATA_POINTS) {
 			accelerometerZData.getData().remove(0);
 		}
-		accelerometerXData.getData().add(new XYChart.Data<Number, Number>(chartIndex, accelerometer.x));
-		accelerometerYData.getData().add(new XYChart.Data<Number, Number>(chartIndex, accelerometer.y));
-		accelerometerZData.getData().add(new XYChart.Data<Number, Number>(chartIndex, accelerometer.z));
+		accelerometerXData.getData().add(new XYChart.Data<>(chartIndex, accelerometer.x));
+		accelerometerYData.getData().add(new XYChart.Data<>(chartIndex, accelerometer.y));
+		accelerometerZData.getData().add(new XYChart.Data<>(chartIndex, accelerometer.z));
 	}
 
 	private void updatePressures(Sensors sensors) {
@@ -580,8 +538,8 @@ public class MainController {
 	
 	@FXML
 	private void onLoadMap(ActionEvent event) {
-		final double latitude = local.gps.getLatitude();
-		final double longitude = local.gps.getLongitude();
+		final double latitude = sensors.gps.getLatitude();
+		final double longitude = sensors.gps.getLongitude();
 		
 		final GoogleMapView mapView = new GoogleMapView();
 		mapView.addMapInializedListener(new MapComponentInitializedListener() {
@@ -612,28 +570,28 @@ public class MainController {
 	}
 	
 	@FXML
-	private void onCopyLocalLatitude(ActionEvent event) {
+	private void onCopyLatitude(ActionEvent event) {
 		Clipboard clipboard = Clipboard.getSystemClipboard();
 		ClipboardContent content = new ClipboardContent();
-		content.putString(localLatitudeLabel.getText());
+		content.putString(latitudeLabel.getText());
 		clipboard.setContent(content);
 	}
 	
 	@FXML
-	private void onCopyLocalLongitude(ActionEvent event) {
+	private void onCopyLongitude(ActionEvent event) {
 		Clipboard clipboard = Clipboard.getSystemClipboard();
 		ClipboardContent content = new ClipboardContent();
-		content.putString(localLongitudeLabel.getText());
+		content.putString(longitudeLabel.getText());
 		clipboard.setContent(content);
 	}
 	
 	@FXML
-	private void onCenterLocal(ActionEvent event) {
+	private void onCenter(ActionEvent event) {
 		if (map == null) return;
 		
 		try {
-			double latitude = Double.valueOf(localLatitudeLabel.getText());
-			double longitude = Double.valueOf(localLongitudeLabel.getText());
+			double latitude = Double.valueOf(latitudeLabel.getText());
+			double longitude = Double.valueOf(longitudeLabel.getText());
 			
 			LatLong position = new LatLong(latitude, longitude);
 			map.setCenter(position);
@@ -643,12 +601,12 @@ public class MainController {
 	}
 	
 	@FXML
-	private void onAddMarkerLocal(ActionEvent event) {
+	private void onAddMarker(ActionEvent event) {
 		if (map == null) return;
 		
 		try {
-			double latitude = Double.valueOf(localLatitudeLabel.getText());
-			double longitude = Double.valueOf(localLongitudeLabel.getText());
+			double latitude = Double.valueOf(latitudeLabel.getText());
+			double longitude = Double.valueOf(longitudeLabel.getText());
 			
 			MarkerOptions options = new MarkerOptions();
 			options.position(new LatLong(latitude, longitude));
@@ -660,73 +618,13 @@ public class MainController {
 	}
 	
 	@FXML
-	private void onZeroLocalAltitude(ActionEvent event) {
-		if (ZERO_TEXT.equals(zeroLocalAltitudeButton.getText())) {
-			zeroLocalAltitudeButton.setText(UNZERO_TEXT);
-			localAltitudeZero = local.gps.getAltitude();
+	private void onZeroAltitude(ActionEvent event) {
+		if (ZERO_TEXT.equals(zeroAltitudeButton.getText())) {
+			zeroAltitudeButton.setText(UNZERO_TEXT);
+			altitudeZero = sensors.gps.getAltitude();
 		} else { // UNZERO_TEXT
-			zeroLocalAltitudeButton.setText(ZERO_TEXT);
-			localAltitudeZero = Double.NaN;
-		}
-		updateGPS();
-	}
-	
-	@FXML
-	private void onCopyRemoteLatitude(ActionEvent event) {
-		Clipboard clipboard = Clipboard.getSystemClipboard();
-		ClipboardContent content = new ClipboardContent();
-		content.putString(remoteLatitudeLabel.getText());
-		clipboard.setContent(content);
-	}
-	
-	@FXML
-	private void onCopyRemoteLongitude(ActionEvent event) {
-		Clipboard clipboard = Clipboard.getSystemClipboard();
-		ClipboardContent content = new ClipboardContent();
-		content.putString(remoteLongitudeLabel.getText());
-		clipboard.setContent(content);
-	}
-	
-	@FXML
-	private void onCenterRemote(ActionEvent event) {
-		if (map == null) return;
-		
-		try {
-			double latitude = Double.valueOf(remoteLatitudeLabel.getText());
-			double longitude = Double.valueOf(remoteLongitudeLabel.getText());
-			
-			LatLong position = new LatLong(latitude, longitude);
-			map.setCenter(position);
-		} catch (NumberFormatException e) {
-			System.err.println(e);
-		}
-	}
-	
-	@FXML
-	private void onAddMarkerRemote(ActionEvent event) {
-		if (map == null) return;
-		
-		try {
-			double latitude = Double.valueOf(remoteLatitudeLabel.getText());
-			double longitude = Double.valueOf(remoteLongitudeLabel.getText());
-			
-			MarkerOptions options = new MarkerOptions();
-			options.position(new LatLong(latitude, longitude));
-			Marker marker = new Marker(options);
-			map.addMarker(marker);
-		} catch (NumberFormatException e) {
-			System.err.println(e);
-		}
-	}
-	
-	@FXML
-	private void onZeroRemoteAltitude(ActionEvent event) {
-		if (ZERO_TEXT.equals(zeroRemoteAltitudeButton.getText())) {
-			zeroRemoteAltitudeButton.setText(UNZERO_TEXT);
-			remoteAltitudeZero = remote.gps.getAltitude();
-		} else { // UNZERO_TEXT
-			zeroRemoteAltitudeButton.setText(ZERO_TEXT);
-			remoteAltitudeZero = Double.NaN;
+			zeroAltitudeButton.setText(ZERO_TEXT);
+			altitudeZero = Double.NaN;
 		}
 		updateGPS();
 	}

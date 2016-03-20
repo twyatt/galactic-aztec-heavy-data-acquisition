@@ -42,6 +42,7 @@ public class Config {
                 + "help=" + help
                 + ", test=" + test
                 + ", debug=" + debug
+                + ", allow-no-logs=" + allowNoLogs
                 + ", logDirs=" + Arrays.toString(logDirs.toArray());
     }
 }

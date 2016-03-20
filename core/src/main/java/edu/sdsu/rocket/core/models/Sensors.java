@@ -14,15 +14,15 @@ public class Sensors {
 	public final Radio radio = new Radio(); // -dBm
 	public final Status system = new Status(); // C
 	
-	public static final int ANALOG_MASK        = 0x1;
-	public static final int BAROMETER_MASK     = 0x2;
-	public static final int ACCELEROMETER_MASK = 0x4;
-	public static final int GYROSCOPE_MASK     = 0x8;
-	public static final int MAGNETOMETER_MASK  = 0x10;
-	public static final int GPS_MASK           = 0x20;
-	public static final int RADIO_MASK         = 0x40;
-	public static final int SYSTEM_MASK        = 0x80;
-	public static final int ALL_MASK           = 0xFF;
+	public static final int ANALOG_MASK        = 0b0000_0001;
+	public static final int BAROMETER_MASK     = 0b0000_0010;
+	public static final int ACCELEROMETER_MASK = 0b0000_0100;
+	public static final int GYROSCOPE_MASK     = 0b0000_1000;
+	public static final int MAGNETOMETER_MASK  = 0b0001_0000;
+	public static final int GPS_MASK           = 0b0010_0000;
+	public static final int RADIO_MASK         = 0b0100_0000;
+	public static final int SYSTEM_MASK        = 0b1000_0000;
+	public static final int ALL_MASK           = 0b1111_1111;
 	
 	public void toByteBuffer(ByteBuffer buffer) {
 		toByteBuffer(buffer, ALL_MASK);

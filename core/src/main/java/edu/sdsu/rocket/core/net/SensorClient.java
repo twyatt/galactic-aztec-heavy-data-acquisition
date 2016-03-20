@@ -12,21 +12,9 @@ import edu.sdsu.rocket.core.models.Sensors;
 
 public class SensorClient {
 	
-	public enum Mode {
-		LOCAL (DatagramMessage.SENSORS_LOCAL), // default
-		REMOTE(DatagramMessage.SENSORS_REMOTE),
-		BOTH  (DatagramMessage.SENSORS_BOTH),
-		;
-		byte value;
-		Mode(byte value) {
-			this.value = value;
-		}
-	}
-	private Mode mode = Mode.LOCAL;
-	
 	public interface SensorClientListener {
-		public void onSensorsUpdated();
-		public void onPingResponse(long latency);
+		void onSensorsUpdated();
+		void onPingResponse(long latency);
 	}
 	
 	private static final int BUFFER_SIZE = 1024; // bytes
@@ -45,20 +33,14 @@ public class SensorClient {
 	
 	private SensorClientListener listener;
 	
-	private final Sensors local;
-	private final Sensors remote;
-	
-	public SensorClient(Sensors local, Sensors remote) {
-		this.local = local;
-		this.remote = remote;
+	private final Sensors sensors;
+
+	public SensorClient(Sensors sensors) {
+		this.sensors = sensors;
 	}
 	
 	public void setListener(SensorClientListener listener) {
 		this.listener = listener;
-	}
-	
-	public void setMode(Mode mode) {
-		this.mode = mode;
 	}
 
 	public void setFrequency(float frequency) {
@@ -90,9 +72,7 @@ public class SensorClient {
 				case DatagramMessage.PING:
 					onPingResponse(message);
 					break;
-				case DatagramMessage.SENSORS_LOCAL:  // fall thru intentional
-				case DatagramMessage.SENSORS_REMOTE: // fall thru intentional
-				case DatagramMessage.SENSORS_BOTH:
+				case DatagramMessage.SENSORS:
 					onSensorData(message);
 					break;
 				}
@@ -153,15 +133,7 @@ public class SensorClient {
 	}
 	
 	public void sendSensorRequest() throws IOException {
-		if (Mode.BOTH.equals(mode)) {
-			byte[] data = new byte[] {
-					(byte) ((Sensors.GPS_MASK | Sensors.RADIO_MASK) & 0xFF),
-					(byte) (Sensors.ALL_MASK & 0xFF),
-			};
-			sendMessage(mode.value, data);
-		} else {
-			sendMessage(mode.value);
-		}
+		sendMessage(DatagramMessage.SENSORS);
 	}
 	
 	public void sendMessage(byte id) throws IOException {
@@ -204,31 +176,10 @@ public class SensorClient {
 			}
 		}
 		
-		Sensors sensors1;
-		Sensors sensors2 = null;
-		
-		switch (message.id) {
-		case DatagramMessage.SENSORS_REMOTE:
-			sensors1 = remote;
-			break;
-		case DatagramMessage.SENSORS_BOTH:
-			sensors2 = remote;
-			// fall-thru intentional
-		default: // SENSORS_LOCAL
-			sensors1 = local;
-			break;
-		}
-		
 		try {
 			ByteBuffer buffer = ByteBuffer.wrap(message.data);
-			int mask1 = buffer.get();
-			int mask2 = sensors2 != null ? buffer.get() : 0;
-			
-			sensors1.fromByteBuffer(buffer, mask1);
-			if (sensors2 != null) {
-				sensors2.fromByteBuffer(buffer, mask2);
-			}
-			
+			int mask = buffer.get();
+			sensors.fromByteBuffer(buffer, mask);
 			if (listener != null) {
 				listener.onSensorsUpdated();
 			}

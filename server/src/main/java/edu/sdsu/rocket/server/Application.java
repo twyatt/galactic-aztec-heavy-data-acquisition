@@ -44,23 +44,8 @@ public class Application {
     private final DeviceManager manager = new DeviceManager();
     private final Reader input = new InputStreamReader(System.in);
     
-    /**
-     * Provides storage of local sensor values. By local, we are referring to
-     * the sensors physically attached to the system this application is running
-     * on.
-     */
-    private final Sensors local = new Sensors();
-    
-    /**
-     * Provides storage of the remote sensor values. Whereas remote refers to
-     * the sensors that are located remotely from the system this application is
-     * running on. This is generally only used for receiving sensor data from
-     * the rocket over radio so this will not be used when this application is
-     * running on a system located on the rocket.
-     */
-    private final Sensors remote = new Sensors();
-    
-    private final SensorServer server = new SensorServer(local, remote);
+    private final Sensors sensors = new Sensors();
+    private final SensorServer server = new SensorServer(sensors);
     
     private XTend900 radio;
     private DeviceRunnable transmitter;
@@ -120,16 +105,16 @@ public class Application {
         adxl345.writeRate(ADXL345.ADXL345_RATE_400);
         
         float scalingFactor = adxl345.getScalingFactor();
-        local.accelerometer.setScalingFactor(scalingFactor);
+        sensors.accelerometer.setScalingFactor(scalingFactor);
         adxl345log.writeScalingFactor(scalingFactor);
         System.out.println("Scaling Factor: " + scalingFactor);
 
         adxl345.setListener(new ADXL345.AccelerometerListener() {
             @Override
             public void onValues(short x, short y, short z) {
-                local.accelerometer.setRawX(x);
-                local.accelerometer.setRawY(y);
-                local.accelerometer.setRawZ(z);
+                sensors.accelerometer.setRawX(x);
+                sensors.accelerometer.setRawY(y);
+                sensors.accelerometer.setRawZ(z);
                 try {
                     adxl345log.writeValues(x, y, z);
                 } catch (IOException e) {
@@ -155,15 +140,15 @@ public class Application {
         itg3205.writeSampleRateDivider(2); // 2667 Hz
         itg3205.writeDLPFBandwidth(ITG3205.ITG3205_DLPF_BW_256);
         
-        local.gyroscope.setScalingFactor(1f / ITG3205.ITG3205_SENSITIVITY_SCALE_FACTOR);
-        itg3205log.writeScalingFactor(local.gyroscope.getScalingFactor());
+        sensors.gyroscope.setScalingFactor(1f / ITG3205.ITG3205_SENSITIVITY_SCALE_FACTOR);
+        itg3205log.writeScalingFactor(sensors.gyroscope.getScalingFactor());
         
         itg3205.setListener(new GyroscopeListener() {
             @Override
             public void onValues(short x, short y, short z) {
-                local.gyroscope.setRawX(x);
-                local.gyroscope.setRawY(y);
-                local.gyroscope.setRawZ(z);
+                sensors.gyroscope.setRawX(x);
+                sensors.gyroscope.setRawY(y);
+                sensors.gyroscope.setRawZ(z);
                 try {
                     itg3205log.writeValues(x, y, z);
                 } catch (IOException e) {
@@ -191,16 +176,16 @@ public class Application {
         }
         
         float scalingFactor = hmc5883l.getGain().getResolution();
-        local.magnetometer.setScalingFactor(scalingFactor);
+        sensors.magnetometer.setScalingFactor(scalingFactor);
         hmc5883llog.writeScalingFactor(scalingFactor);
         System.out.println("Scaling Factor: " + scalingFactor);
         
         hmc5883l.setListener(new MagnetometerListener() {
             @Override
             public void onValues(short x, short y, short z) {
-                local.magnetometer.setRawX(x);
-                local.magnetometer.setRawY(y);
-                local.magnetometer.setRawZ(z);
+                sensors.magnetometer.setRawX(x);
+                sensors.magnetometer.setRawY(y);
+                sensors.magnetometer.setRawZ(z);
                 try {
                     hmc5883llog.writeValues(x, y, z);
                 } catch (IOException e) {
@@ -225,8 +210,8 @@ public class Application {
         ms5611.setListener(new MS5611.BarometerListener() {
             @Override
             public void onValues(int T, int P) {
-                local.barometer.setRawTemperature(T);
-                local.barometer.setRawPressure(P);
+                sensors.barometer.setRawTemperature(T);
+                sensors.barometer.setRawPressure(P);
                 try {
                     ms5611log.writeValues(T, P);
                 } catch (IOException e) {
@@ -280,7 +265,7 @@ public class Application {
                 @Override
                 public void loop() throws IOException, InterruptedException {
                     float value = ads1115[index].readMillivolts();
-                    local.analog.set(index, value);
+                    sensors.analog.set(index, value);
                     ads1115log[index].writeValue(value);
                 }
             });
@@ -312,7 +297,7 @@ public class Application {
                 @Override
                 public void loop() throws IOException, InterruptedException {
                     float value = ads1100[index].readVoltage();
-                    local.analog.set(j, value * 1000f);
+                    sensors.analog.set(j, value * 1000f);
                     ads1100log[index].writeValue(value);
                 }
             }).setFrequency(ads1100[i].getRate().getSamplesPerSecond() * 2);
@@ -363,7 +348,7 @@ public class Application {
                 if (config.debug) {
                     System.out.println("GPS provider update: latitude=" + latitude + ", longitude=" + longitude + ", altitude=" + altitude);
                 }
-                local.gps.set(latitude, longitude, altitude);
+                sensors.gps.set(latitude, longitude, altitude);
             }
         });
         
@@ -376,8 +361,8 @@ public class Application {
                 if (config.debug) {
                     System.out.println("GPS provider update: fix=" + fixStatus + ", satellites=" + satellites);
                 }
-                local.gps.setFixStatus(fixStatus);
-                local.gps.setSatellites(satellites);
+                sensors.gps.setFixStatus(fixStatus);
+                sensors.gps.setSatellites(satellites);
             }
         });
         
@@ -397,8 +382,8 @@ public class Application {
             @Override
             public void loop() throws InterruptedException {
                 try {
-                    local.system.setRawTemperature(Pi.getRawCpuTemperature());
-                    local.system.setIsPowerGood(pgood.isHigh());
+                    sensors.system.setRawTemperature(Pi.getRawCpuTemperature());
+                    sensors.system.setIsPowerGood(pgood.isHigh());
                 } catch (IOException e) {
                     System.err.println(e);
                 }
@@ -457,14 +442,17 @@ public class Application {
         radio.addAPIListener(new APIFrameListener() {
             @Override
             public void onRXPacket(RXPacket packet) {
-//                System.out.println("Radio RX packet: Source address=" + packet.getSourceAddres() + ", Signal strengh=-" + packet.getSignalStrength() + " dBm");
-                local.radio.setSignalStrength(packet.getSignalStrength());
-                ByteBuffer buffer = ByteBuffer.wrap(packet.getRFData());
-                try {
-                    remote.fromByteBuffer(buffer);
-                } catch (BufferUnderflowException e) {
-                    System.err.println(e);
+                if (config.debug) {
+                    System.out.println("Radio RX packet: Source address=" + packet.getSourceAddres() + ", Signal strengh=-" + packet.getSignalStrength() + " dBm");
                 }
+                sensors.radio.setSignalStrength(packet.getSignalStrength());
+
+//                ByteBuffer buffer = ByteBuffer.wrap(packet.getRFData());
+//                try {
+//                    remote.fromByteBuffer(buffer);
+//                } catch (BufferUnderflowException e) {
+//                    System.err.println(e);
+//                }
             }
 
             @Override
@@ -482,7 +470,7 @@ public class Application {
             }
         });
         
-        SensorsTransmitter transmitter = new SensorsTransmitter(radio, local);
+        SensorsTransmitter transmitter = new SensorsTransmitter(radio, sensors);
         this.transmitter = manager.add(transmitter, true /* paused */);
     }
 
@@ -518,14 +506,14 @@ public class Application {
                 System.out.println("w: watchdog status");
                 System.out.println("W: watchdog start");
             }
-            System.out.println("s/S: system status (local/remote)");
-            System.out.println("a/A: accelerometer (local/remote)");
-            System.out.println("g/G: gyroscope (local/remote)");
-            System.out.println("m/M: magnetometer (local/remote)");
-            System.out.println("b/B: barometer (local/remote)");
-            System.out.println("c/C: analog (local/remote)");
-            System.out.println("p/P: gps (local/remote)");
-            System.out.println("r/R: radio (local/remote)");
+            System.out.println("s: system status");
+            System.out.println("a: accelerometer");
+            System.out.println("g: gyroscope");
+            System.out.println("m: magnetometer");
+            System.out.println("b: barometer");
+            System.out.println("c: analog");
+            System.out.println("p: gps");
+            System.out.println("r: radio");
             if (radio != null) {
                 System.out.println("d: toggle radio power (currently " + (radio.isOn() ? "ON" : "OFF") + ")");
                 System.out.println("t: toggle radio transmission (currently " + (transmitter != null && !transmitter.isPaused() ? "ON" : "OFF") + ")");
@@ -547,52 +535,31 @@ public class Application {
             }
             break;
         case 's':
-            System.out.println("CPU: " + local.system.getTemperatureC() + " C, " + local.system.getTemperatureF() + " F, Power " + (local.system.getIsPowerGood() ? "GOOD" : "BAD"));
-            break;
-        case 'S':
-            System.out.println("CPU: " + remote.system.getTemperatureC() + " C, " + remote.system.getTemperatureF() + " F, Power " + (remote.system.getIsPowerGood() ? "GOOD" : "BAD"));
+            System.out.println("CPU: " + sensors.system.getTemperatureC() + " C, " + sensors.system.getTemperatureF() + " F, Power " + (sensors.system.getIsPowerGood() ? "GOOD" : "BAD"));
             break;
         case 'f':
             System.out.println(manager.toString());
             break;
         case 'a':
-            local.accelerometer.get(tmpVec);
-            System.out.println(tmpVec.scl(9.8f) + " m/s^2");
-            break;
-        case 'A':
-            remote.accelerometer.get(tmpVec);
+            sensors.accelerometer.get(tmpVec);
             System.out.println(tmpVec.scl(9.8f) + " m/s^2");
             break;
         case 'm':
-            local.magnetometer.get(tmpVec);
-            System.out.println(tmpVec + " Ga");
-            break;
-        case 'M':
-            remote.magnetometer.get(tmpVec);
+            sensors.magnetometer.get(tmpVec);
             System.out.println(tmpVec + " Ga");
             break;
         case 'b':
-            System.out.println(local.barometer.getTemperature() + " C, " + local.barometer.getPressure() + " mbar");
-            break;
-        case 'B':
-            System.out.println(remote.barometer.getTemperature() + " C, " + remote.barometer.getPressure() + " mbar");
+            System.out.println(sensors.barometer.getTemperature() + " C, " + sensors.barometer.getPressure() + " mbar");
             break;
         case 'g':
-            local.gyroscope.get(tmpVec);
-            System.out.println(tmpVec + " deg/s");
-            break;
-        case 'G':
-            remote.gyroscope.get(tmpVec);
+            sensors.gyroscope.get(tmpVec);
             System.out.println(tmpVec + " deg/s");
             break;
         case 'c':
-            System.out.println(local.analog);
-            break;
-        case 'C':
-            System.out.println(remote.analog);
+            System.out.println(sensors.analog);
             break;
         case 'p':
-            int localFix = local.gps.getFixStatus();
+            int localFix = sensors.gps.getFixStatus();
             String lf;
             switch (localFix) {
             case 2:
@@ -606,40 +573,15 @@ public class Application {
                 break;
             }
             System.out.println(
-                    "latitude="  + local.gps.getLatitude() + ",\t" +
-                    "longitude=" + local.gps.getLongitude() + ",\t" +
-                    "altitude="  + local.gps.getAltitude() + " m MSL,\t" +
+                    "latitude="  + sensors.gps.getLatitude() + ",\t" +
+                    "longitude=" + sensors.gps.getLongitude() + ",\t" +
+                    "altitude="  + sensors.gps.getAltitude() + " m MSL,\t" +
                     "fix=" + lf + "\t" +
-                    "satellites=" + local.gps.getSatellites()
-                    );
-            break;
-        case 'P':
-            int remoteFix = local.gps.getFixStatus();
-            String rf;
-            switch (remoteFix) {
-            case 2:
-                rf = "2D";
-                break;
-            case 3:
-                rf = "3D";
-                break;
-            default:
-                rf = "no fix";
-                break;
-            }
-            System.out.println(
-                    "latitude="  + remote.gps.getLatitude() + ",\t" +
-                    "longitude=" + remote.gps.getLongitude() + ",\t" +
-                    "altitude="  + remote.gps.getAltitude() + " m MSL,\t" +
-                    "fix=" + rf + "\t" +
-                    "satellites=" + local.gps.getSatellites()
+                    "satellites=" + sensors.gps.getSatellites()
                     );
             break;
         case 'r':
-            System.out.println("Signal Strength: -" + local.radio.getSignalStrength() + " dBm");
-            break;
-        case 'R':
-            System.out.println("Signal Strength: -" + remote.radio.getSignalStrength() + " dBm");
+            System.out.println("Signal Strength: -" + sensors.radio.getSignalStrength() + " dBm");
             break;
         case 'd':
             if (radio != null) {
