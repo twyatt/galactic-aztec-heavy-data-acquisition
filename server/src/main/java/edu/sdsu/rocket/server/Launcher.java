@@ -8,9 +8,10 @@ public class Launcher {
         final Config config = new Config(args);
 
         if (config.help) {
-            System.out.println("usage: server [OPTIONS] [LOG DIRECTORY] [LOG DIRECTORY...]");
-            System.out.println("--test   Enabled testing mode");
-            System.out.println("--debug  Enabled debug mode");
+            System.out.println("usage: server [OPTIONS] <LOG DIRECTORY> [<LOG DIRECTORY> ...]");
+            System.out.println("--test           Enabled testing mode");
+            System.out.println("--debug          Enabled debug mode");
+            System.out.println("--allow-no-logs  Allow application to run without logging");
             System.exit(0);
         }
 
@@ -18,6 +19,11 @@ public class Launcher {
             for (int i = 0; i < 3; i++) {
                 System.out.println("!!! TESTING MODE !!! TESTING MODE !!! TESTING MODE !!!");
                 Thread.sleep(1000L);
+            }
+        } else {
+            if (config.logDirs.size == 0 && !config.allowNoLogs) {
+                System.err.println("Error: No log directories specified. Use --allow-no-logs to disable this check.");
+                System.exit(1);
             }
         }
 

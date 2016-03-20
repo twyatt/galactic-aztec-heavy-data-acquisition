@@ -11,6 +11,7 @@ public class Config {
     public boolean help;
     public boolean test;
     public boolean debug;
+    public boolean allowNoLogs;
     public final Array<File> logDirs = new Array<>();
 
     public Config(String[] args) throws FileNotFoundException {
@@ -22,6 +23,8 @@ public class Config {
                     test = true;
                 } else if (arg.equalsIgnoreCase("--debug")) {
                     debug = true;
+                } else if (arg.equalsIgnoreCase("--allow-no-logs")) {
+                    allowNoLogs = true;
                 }
             } else {
                 File dir = new File(arg);
