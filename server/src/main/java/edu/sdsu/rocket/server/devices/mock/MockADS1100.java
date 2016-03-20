@@ -31,24 +31,12 @@ public class MockADS1100 extends ADS1100 {
 		return false;
 	}
 
-	public float readVoltageMock() throws IOException, InterruptedException {
-        Thread.sleep(1L);
-
-        x += 0.01f;
-        if (x > 1000f) x = 0f;
-
+	@Override
+	public float readVoltage() throws IOException {
+        if ((x += 0.01f) > 1000f) x = 0f; // 0 to 1000
 		float s = MathUtils.sin(x); // -1 to 1
 		float sp = (s / 2f) + 0.5f; // 0 to 1
 		return sp * getSupplyVoltage();
-	}
-	
-	@Override
-	public void loop() throws IOException, InterruptedException {
-        float value = readVoltageMock();
-
-        if (listener != null) {
-            listener.onValue(value);
-        }
 	}
 
 }

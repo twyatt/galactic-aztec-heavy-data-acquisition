@@ -10,17 +10,7 @@ import java.io.IOException;
 /**
  * Self-Calibrating, 16-Bit Analog-to-Digital Converter
  */
-public class ADS1100 implements Device {
-
-    public interface AnalogListener {
-        void onValue(float value);
-    }
-    protected AnalogListener listener;
-
-    public ADS1100 setListener(AnalogListener listener) {
-        this.listener = listener;
-        return this;
-    }
+public class ADS1100 {
 
     /**
      *        I2C Address | Package Marking
@@ -282,14 +272,6 @@ public class ADS1100 implements Device {
     public float readVoltage() throws IOException {
         final float conversion = -1 * rate.min * gain.value;
         return readOutputRegister() / conversion * Vdd;
-    }
-
-    @Override
-    public void loop() throws IOException, InterruptedException {
-        float value = readVoltage();
-        if (listener != null) {
-            listener.onValue(value);
-        }
     }
 
 }

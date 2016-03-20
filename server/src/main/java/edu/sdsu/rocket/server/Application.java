@@ -124,7 +124,6 @@ public class Application {
         adxl345log.writeScalingFactor(scalingFactor);
         System.out.println("Scaling Factor: " + scalingFactor);
 
-
         adxl345.setListener(new ADXL345.AccelerometerListener() {
             @Override
             public void onValues(short x, short y, short z) {
@@ -268,38 +267,22 @@ public class Application {
             ads1115log[i] = new ADS1115OutputStream(log.create(name + ".log"));
 
             ads1115[i].setup()
-                    .setGain(ADS1115.Gain.PGA_1)
-                    .setMode(ADS1115.Mode.MODE_SINGLE)
+                    .setGain(ADS1115.Gain.PGA_2_3)
+                    .setMode(ADS1115.Mode.MODE_CONTINUOUS)
                     .setRate(ADS1115.Rate.DR_860SPS)
                     .setComparator(ADS1115.Comparator.COMP_MODE_HYSTERESIS)
-                    ;
-
-            int sps = ads1115[i].getRate().getSamplesPerSecond();
-            long timeout = NANOSECONDS_PER_SECOND / sps * 5L; // 5 X expected sample duration
-            ads1115[i].setTimeout(timeout);
-            ads1115[i].setSequence(new int[]{0});
-            System.out.println(name + " timeout: " + timeout);
+                    .setSingleEnded(ADS1115.Channel.A0)
+                    .writeConfig();
 
             final int index = i;
-            ads1115[i].setListener(new ADS1115.AnalogListener() {
+            manager.add(new DeviceManager.Device() {
                 @Override
-                public void onValue(ADS1115.Channel channel, float value) {
+                public void loop() throws IOException, InterruptedException {
+                    float value = ads1115[index].readMillivolts();
                     local.analog.set(index, value);
-                    try {
-                        ads1115log[index].writeValue(channel.ordinal(), value);
-                    } catch (IOException e) {
-                        System.err.println(e);
-                    }
-                }
-                @Override
-                public void onConversionTimeout() {
-                    if (config.debug) {
-                        System.err.println("ADS1115 " + index + " conversion timeout.");
-                    }
+                    ads1115log[index].writeValue(0, value);
                 }
             });
-
-            manager.add(ads1115[i]);
         }
 
 
@@ -316,25 +299,21 @@ public class Application {
             System.out.println("Setup ADC [" + name + "]");
             ads1100log[i] = new ADS1100OutputStream(log.create(name + ".log"));
 
-            ads1100[i].setGain(ADS1100.Gain.PGA_1);
-            ads1100[i].setRate(ADS1100.Rate.SPS_16);
-            ads1100[i].setMode(ADS1100.Mode.CONTINUOUS);
+            ads1100[i].setup()
+                    .setGain(ADS1100.Gain.PGA_1)
+                    .setRate(ADS1100.Rate.SPS_16)
+                    .setMode(ADS1100.Mode.CONTINUOUS)
+                    .writeConfig();
 
             final int index = i;
-            ads1100[i].setListener(new ADS1100.AnalogListener() {
+            manager.add(new DeviceManager.Device() {
                 @Override
-                public void onValue(float value) {
+                public void loop() throws IOException, InterruptedException {
+                    float value = ads1100[index].readVoltage();
                     local.analog.set(j, value * 1000f);
-                    try {
-                        ads1100log[index].writeValue(value);
-                    } catch (IOException e) {
-                        System.err.println(e);
-                    }
+                    ads1100log[index].writeValue(value);
                 }
-            });
-
-            ads1100[i].setup().writeConfig();
-            manager.add(ads1100[i]);
+            }).setFrequency(ads1100[i].getRate().getSamplesPerSecond() * 2);
         }
     }
     

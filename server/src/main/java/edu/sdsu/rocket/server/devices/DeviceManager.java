@@ -12,7 +12,7 @@ public class DeviceManager {
 		void loop() throws IOException, InterruptedException;
 	}
 	
-	private List<DeviceThread> threads = new ArrayList<DeviceThread>();
+	private List<DeviceThread> threads = new ArrayList<>();
 	
 	public DeviceRunnable add(Device device) {
 		return add(device, false);
