@@ -3,7 +3,6 @@ package edu.sdsu.rocket.server.devices;
 import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CDevice;
 import com.pi4j.io.i2c.I2CFactory;
-import edu.sdsu.rocket.server.devices.DeviceManager.Device;
 
 import java.io.IOException;
 
@@ -274,4 +273,12 @@ public class ADS1100 {
         return readOutputRegister() / conversion * Vdd;
     }
 
+    @Override
+    public String toString() {
+        return super.toString()
+                + ": Vdd=" + Vdd
+                + ", gain=" + gain
+                + ", rate=" + rate
+                + ", mode=" + mode;
+    }
 }

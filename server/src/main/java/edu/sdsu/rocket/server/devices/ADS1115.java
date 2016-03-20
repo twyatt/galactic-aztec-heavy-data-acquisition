@@ -3,11 +3,10 @@ package edu.sdsu.rocket.server.devices;
 import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CDevice;
 import com.pi4j.io.i2c.I2CFactory;
-import edu.sdsu.rocket.server.devices.DeviceManager.Device;
 
 import java.io.IOException;
 
-public class ADS1115 implements Device {
+public class ADS1115 {
     
     public enum Channel {
         A0, A1, A2, A3;
@@ -20,31 +19,7 @@ public class ADS1115 implements Device {
             }
         }
     }
-    
-    public interface AnalogListener {
-        void onValue(Channel channel, float value);
-        void onConversionTimeout();
-    }
-    protected AnalogListener listener;
 
-    public ADS1115 setListener(AnalogListener listener) {
-        this.listener = listener;
-        return this;
-    }
-    
-    protected long timeout;
-    public void setTimeout(long timeout) {
-        this.timeout = timeout;
-    }
-
-    protected int[] sequence = new int[] { 0, 1, 2, 3 };
-    public void setSequence(int[] sequence) {
-        if (sequence == null || sequence.length == 0) {
-            sequence = new int[] { 0, 1, 2, 3 };
-        }
-        this.sequence = sequence;
-    }
-    
     /**
      * Table 5. ADDR Pin Connection and Corresponding Slave Address, pg 17
      * 
@@ -92,7 +67,7 @@ public class ADS1115 implements Device {
         }
     }
     
-    /*
+    /**
      * Table 9. Config Register (Read/Write), pg 18
      * 
      *  BIT | 15 |  14  |  13  |  12  |  11  |  10  |   9  |   8  |
@@ -525,29 +500,18 @@ public class ADS1115 implements Device {
         i2c.read(address, BUFFER, offset, size);
         return (BUFFER[0] << 8) | (BUFFER[1] & 0xFF);
     }
-    
+
     @Override
-    public void loop() throws IOException, InterruptedException {
-        for (int channel : sequence) {
-            long start = System.nanoTime();
-            setSingleEnded(channel).begin();
-            
-            // wait for conversion
-            while (isPerformingConversion()) {
-                if (System.nanoTime() - start > timeout) {
-                    if (listener != null) {
-                        listener.onConversionTimeout();
-                    }
-                    break;
-                }
-            }
-            
-            float value = readMillivolts();
-            
-            if (listener != null) {
-                listener.onValue(Channel.valueOf(channel), value);
-            }
-        }
+    public String toString() {
+        return super.toString()
+                + ": multiplexer=" + multiplexer
+                + ", gain=" + gain
+                + ", mode=" + mode
+                + ", rate=" + rate
+                + ", comparator=" + comparator
+                + ", polarity=" + polarity
+                + ", latching=" + latching
+                + ", queue=" + queue;
     }
 
 }

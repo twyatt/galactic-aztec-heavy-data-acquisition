@@ -258,13 +258,13 @@ public class Application {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SDA),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SCL),
         };
-        final ADS1115OutputStream[] ads1115log = new ADS1115OutputStream[ads1115.length];
+        final SingleChannelADCOutputStream[] ads1115log = new SingleChannelADCOutputStream[ads1115.length];
 
         for (int i = 0; i < ads1115.length; i++) {
             final String name = "ADS1115-A" + i;
 
             System.out.println("Setup ADC [" + name + "]");
-            ads1115log[i] = new ADS1115OutputStream(log.create(name + ".log"));
+            ads1115log[i] = new SingleChannelADCOutputStream(log.create(name + ".log"));
 
             ads1115[i].setup()
                     .setGain(ADS1115.Gain.PGA_2_3)
@@ -273,6 +273,7 @@ public class Application {
                     .setComparator(ADS1115.Comparator.COMP_MODE_HYSTERESIS)
                     .setSingleEnded(ADS1115.Channel.A0)
                     .writeConfig();
+            System.out.println(ads1115[i]);
 
             final int index = i;
             manager.add(new DeviceManager.Device() {
@@ -280,7 +281,7 @@ public class Application {
                 public void loop() throws IOException, InterruptedException {
                     float value = ads1115[index].readMillivolts();
                     local.analog.set(index, value);
-                    ads1115log[index].writeValue(0, value);
+                    ads1115log[index].writeValue(value);
                 }
             });
         }
@@ -290,20 +291,21 @@ public class Application {
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD4),
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD5),
         };
-        final ADS1100OutputStream[] ads1100log = new ADS1100OutputStream[ads1100.length];
+        final SingleChannelADCOutputStream[] ads1100log = new SingleChannelADCOutputStream[ads1100.length];
 
         for (int i = 0; i < ads1100.length; i++) {
             final int j = i + ads1115.length;
             final String name = "ADS1100-A" + j;
 
             System.out.println("Setup ADC [" + name + "]");
-            ads1100log[i] = new ADS1100OutputStream(log.create(name + ".log"));
+            ads1100log[i] = new SingleChannelADCOutputStream(log.create(name + ".log"));
 
             ads1100[i].setup()
                     .setGain(ADS1100.Gain.PGA_1)
                     .setRate(ADS1100.Rate.SPS_16)
                     .setMode(ADS1100.Mode.CONTINUOUS)
                     .writeConfig();
+            System.out.println(ads1100[i]);
 
             final int index = i;
             manager.add(new DeviceManager.Device() {

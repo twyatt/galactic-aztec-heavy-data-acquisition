@@ -41,7 +41,7 @@ public class MockADS1115 extends ADS1115 {
     @Override
     public ADS1115 setSingleEnded(int channel) {
         this.channel = channel;
-        return this;
+        return super.setSingleEnded(channel);
     }
 
     @Override
