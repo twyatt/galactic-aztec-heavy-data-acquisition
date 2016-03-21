@@ -18,7 +18,7 @@ public class Pressures {
     }
     
     public float getMotor() {
-        float volts = analog.get(0)  / 1000f;
+        float volts = analog.get(0) / 1000f;
         return MathHelper.translate(volts, 0f, 5f, 0f, (float) MOTOR_MAX_PRESSURE);
         
         // P51-500-A-A-I36-5V-000-000

@@ -6,18 +6,17 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class SingleChannelADCOutputStream extends DataOutputStream {
+public abstract class DeviceOutputStream extends DataOutputStream {
 
     private final Stopwatch stopwatch = new Stopwatch();
 
-    public SingleChannelADCOutputStream(OutputStream out) {
+    public DeviceOutputStream(OutputStream out) {
         super(out);
     }
 
-    public long writeValue(float value) throws IOException {
+    public long writeTimestamp() throws IOException {
         long timestamp = stopwatch.nanoSecondsElapsed();
         writeLong(timestamp);
-        writeFloat(value);
         return timestamp;
     }
 

@@ -17,7 +17,6 @@ javafx {
 
 dependencies {
     compile project(':core')
-    
-    compile 'eu.hansolo.enzo:Enzo:0.2.2'
-    compile 'com.lynden:GMapsFX:1.1.1'
+
+    compile 'eu.hansolo.enzo:Enzo:0.3.6'
 }

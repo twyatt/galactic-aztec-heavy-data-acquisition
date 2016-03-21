@@ -8,7 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class LogManager {
+public class Logger {
 
     private static final String FILE_SEPARATOR = System.getProperty("file.separator");
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -16,7 +16,7 @@ public class LogManager {
     private final Array<File> directories;
     private final Array<OutputStream> streams = new Array<>();
 
-    public LogManager(Array<File> directories) {
+    public Logger(Array<File> directories) {
         this.directories = appendTimestampDirectory(directories);
     }
 

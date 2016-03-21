@@ -1,20 +1,20 @@
 package edu.sdsu.rocket.server;
 
-import com.badlogic.gdx.math.Vector3;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
-import edu.sdsu.rocket.core.io.*;
+import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
+import edu.sdsu.rocket.core.io.devices.ADS1100OutputStream;
+import edu.sdsu.rocket.core.io.devices.ADS1114OutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorServer;
-import edu.sdsu.rocket.server.devices.*;
+import edu.sdsu.rocket.server.devices.ADS1100;
+import edu.sdsu.rocket.server.devices.ADS1115;
+import edu.sdsu.rocket.server.devices.DeviceManager;
 import edu.sdsu.rocket.server.devices.DeviceManager.DeviceRunnable;
-import edu.sdsu.rocket.server.devices.HMC5883L.DataOutputRate;
-import edu.sdsu.rocket.server.devices.HMC5883L.MagnetometerListener;
-import edu.sdsu.rocket.server.devices.HMC5883L.OperatingMode;
-import edu.sdsu.rocket.server.devices.ITG3205.GyroscopeListener;
-import edu.sdsu.rocket.server.devices.mock.*;
+import edu.sdsu.rocket.server.devices.mock.MockADS1100;
+import edu.sdsu.rocket.server.devices.mock.MockADS1115;
 import edu.sdsu.rocket.server.io.radio.*;
 import edu.sdsu.rocket.server.io.radio.Watchdog.WatchdogListener;
 import edu.sdsu.rocket.server.io.radio.XTend900.XTend900Listener;
@@ -32,15 +32,13 @@ import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 import java.io.*;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
 
 public class Application {
     
     private static final long NANOSECONDS_PER_SECOND = 1000000000L;
 
     private final Config config;
-    private LogManager log;
+    private Logger log;
     private final DeviceManager manager = new DeviceManager();
     private final Reader input = new InputStreamReader(System.in);
     
@@ -52,8 +50,6 @@ public class Application {
     private Watchdog watchdog;
     private Thread statusThread;
     
-    private final Vector3 tmpVec = new Vector3();
-
     public Application(Config config) {
         this.config = config;
     }
@@ -67,7 +63,7 @@ public class Application {
 
     protected void setupLogging() throws IOException {
         System.out.println("Setup Logging.");
-        log = new LogManager(config.logDirs);
+        log = new Logger(config.logDirs);
 
         OutputStream logStream = log.create("log.txt");
         OutputStream out = new OutputStreamMultiplexer(System.out, logStream);
@@ -82,191 +78,43 @@ public class Application {
     
     protected void setupDevices() throws IOException, InterruptedException {
         setupADC();
-//        setupAccelerometer();
-//        setupGyroscope();
-//        setupMagnetometer();
-//        setupBarometer();
 //        setupGPS();
 //        setupRadio();
 //        setupWatchdog();
     }
     
-    private void setupAccelerometer() throws IOException {
-        System.out.println("Setup Accelerometer [ADXL345].");
-        final ADXL345OutputStream adxl345log = new ADXL345OutputStream(log.create("ADXL345.log"));
-        
-        ADXL345 adxl345 = config.test ? new MockADXL345() : new ADXL345();
-        adxl345.setup();
-        if (!adxl345.verifyDeviceID()) {
-            throw new IOException("Failed to verify ADXL345 device ID.");
-        }
-        adxl345.writeRange(ADXL345.ADXL345_RANGE_16G);
-        adxl345.writeFullResolution(true);
-        adxl345.writeRate(ADXL345.ADXL345_RATE_400);
-        
-        float scalingFactor = adxl345.getScalingFactor();
-        sensors.accelerometer.setScalingFactor(scalingFactor);
-        adxl345log.writeScalingFactor(scalingFactor);
-        System.out.println("Scaling Factor: " + scalingFactor);
-
-        adxl345.setListener(new ADXL345.AccelerometerListener() {
-            @Override
-            public void onValues(short x, short y, short z) {
-                sensors.accelerometer.setRawX(x);
-                sensors.accelerometer.setRawY(y);
-                sensors.accelerometer.setRawZ(z);
-                try {
-                    adxl345log.writeValues(x, y, z);
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-            }
-        });
-        
-        manager.add(adxl345);
-    }
-
-    private void setupGyroscope() throws IOException {
-        System.out.println("Setup Gyroscope [ITG3205].");
-        final ITG3205OutputStream itg3205log = new ITG3205OutputStream(log.create("ITG3205.log"));
-        
-        ITG3205 itg3205 = config.test ? new MockITG3205() : new ITG3205();
-        itg3205.setup();
-        if (!itg3205.verifyDeviceID()) {
-            throw new IOException("Failed to verify ITG3205 device ID.");
-        }
-        // F_sample = F_internal / (divider + 1)
-        // divider = F_internal / F_sample - 1
-        itg3205.writeSampleRateDivider(2); // 2667 Hz
-        itg3205.writeDLPFBandwidth(ITG3205.ITG3205_DLPF_BW_256);
-        
-        sensors.gyroscope.setScalingFactor(1f / ITG3205.ITG3205_SENSITIVITY_SCALE_FACTOR);
-        itg3205log.writeScalingFactor(sensors.gyroscope.getScalingFactor());
-        
-        itg3205.setListener(new GyroscopeListener() {
-            @Override
-            public void onValues(short x, short y, short z) {
-                sensors.gyroscope.setRawX(x);
-                sensors.gyroscope.setRawY(y);
-                sensors.gyroscope.setRawZ(z);
-                try {
-                    itg3205log.writeValues(x, y, z);
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-            }
-            
-        });
-        
-        manager.add(itg3205);
-    }
-    
-    private void setupMagnetometer() throws IOException, FileNotFoundException {
-        System.out.println("Setup Magnetometer [HMC5883L].");
-        final HMC5883LOutputStream hmc5883llog = new HMC5883LOutputStream(log.create("HMC588L.log"));
-
-        HMC5883L hmc5883l = config.test ? new MockHMC5883L() : new HMC5883L();
-        hmc5883l
-            .setDataOutputRate(DataOutputRate.RATE_75)
-            .setOperatingMode(OperatingMode.CONTINUOUS)
-            .setup();
-        
-        if (!hmc5883l.verifyIdentification()) {
-            throw new IOException("Failed to verify HMC5883L identification: " + Integer.toHexString(hmc5883l.getIdentification()));
-        }
-        
-        float scalingFactor = hmc5883l.getGain().getResolution();
-        sensors.magnetometer.setScalingFactor(scalingFactor);
-        hmc5883llog.writeScalingFactor(scalingFactor);
-        System.out.println("Scaling Factor: " + scalingFactor);
-        
-        hmc5883l.setListener(new MagnetometerListener() {
-            @Override
-            public void onValues(short x, short y, short z) {
-                sensors.magnetometer.setRawX(x);
-                sensors.magnetometer.setRawY(y);
-                sensors.magnetometer.setRawZ(z);
-                try {
-                    hmc5883llog.writeValues(x, y, z);
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-            }
-            
-        });
-        
-        manager
-            .add(hmc5883l)
-            .setSleep(hmc5883l.getDataOutputRate().getDelay());
-    }
-    
-    private void setupBarometer() throws IOException {
-        System.out.println("Setup Barometer [MS5611].");
-        final MS5611OutputStream ms5611log = new MS5611OutputStream(log.create("MS5611.log"));
-
-        MS5611 ms5611 = config.test ? new MockMS5611() : new MS5611();
-        ms5611.setup();
-        
-        ms5611.setListener(new MS5611.BarometerListener() {
-            @Override
-            public void onValues(int T, int P) {
-                sensors.barometer.setRawTemperature(T);
-                sensors.barometer.setRawPressure(P);
-                try {
-                    ms5611log.writeValues(T, P);
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-            }
-
-            @Override
-            public void onFault(MS5611.Fault fault) {
-                try {
-                    ms5611log.writeFault(fault.ordinal());
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-                
-                if (config.debug) {
-                    System.err.println("MS5611 fault: " + fault);
-                }
-            }
-        });
-        
-        manager.add(ms5611);
-    }
-
     private void setupADC() throws IOException {
-        final ADS1115[] ads1115 = new ADS1115[] {
+        final ADS1115[] ads1114 = new ADS1115[] {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_GND),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_VDD),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SDA),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SCL),
         };
-        final SingleChannelADCOutputStream[] ads1115log = new SingleChannelADCOutputStream[ads1115.length];
+        final ADS1114OutputStream[] ads1114log = new ADS1114OutputStream[ads1114.length];
 
-        for (int i = 0; i < ads1115.length; i++) {
-            final String name = "ADS1115-A" + i;
+        for (int i = 0; i < ads1114.length; i++) {
+            final String name = "ADS1114-A" + i;
 
             System.out.println("Setup ADC [" + name + "]");
-            ads1115log[i] = new SingleChannelADCOutputStream(log.create(name + ".log"));
+            ads1114log[i] = new ADS1114OutputStream(log.create(name + ".log"));
 
-            ads1115[i].setup()
+            ads1114[i].setup()
                     .setGain(ADS1115.Gain.PGA_2_3)
                     .setMode(ADS1115.Mode.MODE_CONTINUOUS)
                     .setRate(ADS1115.Rate.DR_860SPS)
                     .setComparator(ADS1115.Comparator.COMP_MODE_HYSTERESIS)
                     .setSingleEnded(ADS1115.Channel.A0)
                     .writeConfig();
-            System.out.println(ads1115[i]);
+            ads1114log[i].writeConfig(ads1114[i].getConfig());
+            System.out.println(ads1114[i]);
 
             final int index = i;
             manager.add(new DeviceManager.Device() {
                 @Override
                 public void loop() throws IOException, InterruptedException {
-                    float value = ads1115[index].readMillivolts();
+                    float value = ads1114[index].readMillivolts();
                     sensors.analog.set(index, value);
-                    ads1115log[index].writeValue(value);
+                    ads1114log[index].writeValue(value);
                 }
             });
         }
@@ -276,20 +124,21 @@ public class Application {
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD4),
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD5),
         };
-        final SingleChannelADCOutputStream[] ads1100log = new SingleChannelADCOutputStream[ads1100.length];
+        final ADS1100OutputStream[] ads1100log = new ADS1100OutputStream[ads1100.length];
 
         for (int i = 0; i < ads1100.length; i++) {
-            final int j = i + ads1115.length;
+            final int j = i + ads1114.length;
             final String name = "ADS1100-A" + j;
 
             System.out.println("Setup ADC [" + name + "]");
-            ads1100log[i] = new SingleChannelADCOutputStream(log.create(name + ".log"));
+            ads1100log[i] = new ADS1100OutputStream(log.create(name + ".log"));
 
             ads1100[i].setup()
                     .setGain(ADS1100.Gain.PGA_1)
                     .setRate(ADS1100.Rate.SPS_16)
                     .setMode(ADS1100.Mode.CONTINUOUS)
                     .writeConfig();
+            ads1100log[i].writeConfig(ads1100[i].getConfig(), ads1100[i].getSupplyVoltage());
             System.out.println(ads1100[i]);
 
             final int index = i;
@@ -392,12 +241,6 @@ public class Application {
         statusThread.start();
     }
     
-    protected void setupServer(int port) throws IOException {
-        System.out.println("Setup server.");
-        server.setDebug(config.debug);
-        server.start(port);
-    }
-    
     protected void setupRadio() throws IOException, IllegalStateException, InterruptedException {
         System.out.println("Setup Radio [XTend 900].");
 
@@ -411,12 +254,12 @@ public class Application {
                 .setTransmitOnly(XTend900Config.TransmitOnly.TX_ONLY)
                 ;
         System.out.println("Config: " + radioConfig);
-        
+
         Serial serial = SerialFactory.createInstance();
 
         String device = "/dev/ttyAMA0";
         serial.open(device, radioConfig.getInterfaceDataRate().getBaud());
-        
+
         radio = new XTend900(serial);
         radio.setConfig(radioConfig);
         radio.setup();
@@ -469,14 +312,14 @@ public class Application {
                 }
             }
         });
-        
+
         SensorsTransmitter transmitter = new SensorsTransmitter(radio, sensors);
         this.transmitter = manager.add(transmitter, true /* paused */);
     }
 
     private void setupWatchdog() {
         System.out.println("Setup watchdog for XTend 900.");
-        
+
         watchdog = new Watchdog(30);
         watchdog.setListener(new WatchdogListener() {
             @Override
@@ -491,7 +334,13 @@ public class Application {
         watchdog.start();
         radio.addAPIListener(watchdog);
     }
-    
+
+    protected void setupServer(int port) throws IOException {
+        System.out.println("Setup server.");
+        server.setDebug(config.debug);
+        server.start(port);
+    }
+
     public void loop() throws IOException {
         handleInput();
     }
@@ -507,10 +356,6 @@ public class Application {
                 System.out.println("W: watchdog start");
             }
             System.out.println("s: system status");
-            System.out.println("a: accelerometer");
-            System.out.println("g: gyroscope");
-            System.out.println("m: magnetometer");
-            System.out.println("b: barometer");
             System.out.println("c: analog");
             System.out.println("p: gps");
             System.out.println("r: radio");
@@ -539,21 +384,6 @@ public class Application {
             break;
         case 'f':
             System.out.println(manager.toString());
-            break;
-        case 'a':
-            sensors.accelerometer.get(tmpVec);
-            System.out.println(tmpVec.scl(9.8f) + " m/s^2");
-            break;
-        case 'm':
-            sensors.magnetometer.get(tmpVec);
-            System.out.println(tmpVec + " Ga");
-            break;
-        case 'b':
-            System.out.println(sensors.barometer.getTemperature() + " C, " + sensors.barometer.getPressure() + " mbar");
-            break;
-        case 'g':
-            sensors.gyroscope.get(tmpVec);
-            System.out.println(tmpVec + " deg/s");
             break;
         case 'c':
             System.out.println(sensors.analog);
