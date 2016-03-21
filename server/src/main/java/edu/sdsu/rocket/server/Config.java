@@ -1,10 +1,10 @@
 package edu.sdsu.rocket.server;
 
-import com.badlogic.gdx.utils.Array;
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Config {
 
@@ -12,7 +12,7 @@ public class Config {
     public boolean test;
     public boolean debug;
     public boolean allowNoLogs;
-    public final Array<File> logDirs = new Array<>();
+    public final List<File> logDirs = new ArrayList<>();
 
     public Config(String[] args) throws FileNotFoundException {
         for (String arg : args) {

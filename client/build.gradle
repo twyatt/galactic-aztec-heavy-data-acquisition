@@ -17,6 +17,5 @@ javafx {
 
 dependencies {
     compile project(':core')
-
-    compile 'eu.hansolo.enzo:Enzo:0.3.6'
+    compile fileTree(dir: 'libs', include: '*.jar')
 }

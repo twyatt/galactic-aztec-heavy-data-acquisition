@@ -21,7 +21,7 @@ public class Launcher {
                 Thread.sleep(1000L);
             }
         } else {
-            if (config.logDirs.size == 0 && !config.allowNoLogs) {
+            if (config.logDirs.size() == 0 && !config.allowNoLogs) {
                 System.err.println("Error: No log directories specified. Use --allow-no-logs to disable this check.");
                 System.exit(1);
             }

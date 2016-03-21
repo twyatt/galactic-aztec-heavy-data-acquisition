@@ -2,7 +2,6 @@ package edu.sdsu.rocket.server.devices.mock;
 
 import java.io.IOException;
 
-import com.badlogic.gdx.math.MathUtils;
 import edu.sdsu.rocket.server.devices.ADS1115;
 
 public class MockADS1115 extends ADS1115 {
@@ -47,7 +46,7 @@ public class MockADS1115 extends ADS1115 {
     @Override
     public float readMillivolts() throws IOException {
         if ((x[channel] += 0.01f) > 1000f) x[channel] = 0f; // 0 to 1000
-        float s = MathUtils.sin(x[channel]); // -1 to 1
+        float s = (float) Math.sin(x[channel]); // -1 to 1
         float sp = (s / 2f) + 0.5f; // 0 to 1
         return sp * 3300;
     }
