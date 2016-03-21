@@ -26,6 +26,7 @@ import java.text.DecimalFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.prefs.Preferences;
 
 public class MainController {
     
@@ -106,6 +107,7 @@ public class MainController {
         });
         
         createSensors();
+        loadSettings();
     }
 
     private void createSensors() {
@@ -396,12 +398,24 @@ public class MainController {
         event.consume();
     }
 
+    private void saveSettings() {
+        Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
+        prefs.put("host", hostTextField.getText());
+    }
+
+    private void loadSettings() {
+        Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
+        hostTextField.setText(prefs.get("host", "raspberrypi"));
+    }
+
     /**
      * Determines if a shutdown (quit) process should commence.
      * 
      * @return
      */
     public boolean requestQuit() {
+        saveSettings();
+
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(Launcher.NAME);
         alert.setHeaderText("Quit");

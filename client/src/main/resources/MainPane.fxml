@@ -9,7 +9,7 @@
         <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
             <items>
                 <Label text="Host" />
-                <TextField fx:id="hostTextField" text="data1" />
+                <TextField fx:id="hostTextField" text="" />
                 <Button fx:id="connectButton" mnemonicParsing="false" onAction="#onConnect" text="Connect" />
                 <Separator />
                 <Label text="Display" />
