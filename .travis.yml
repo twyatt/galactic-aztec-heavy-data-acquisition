@@ -1,7 +1,26 @@
 language: java
 
+os:
+  - linux
+  - osx
+
 jdk: oraclejdk8
 
 addons:
   apt:
-    packages: oracle-java8-installer
+    packages:
+      - oracle-java8-installer
+
+script: ./gradlew clean assemble :client:jfxNative
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "kaF5Z4L9NjVqzjdY3GbyGMV2NgYLygkAf99qIPSrm3viUyNBmK+rVmZQuIA8y930fRPt7m0I2KmC1qIsAyVidiDX4MDFHg1b1m4BCwg63Z8s489E66wwOVOIuu+pOxiDONz4nyWTDHUQf/KQUnD3fzTg9nCDL69AYy/AF3v8C4T/GZyb9nLChnR5iM08SA8/rznlosQi6YDCebjX3oVY3jgbF2pZtuMDsznuDE4rEuXKXkK6Le+sp2yZtHjXnwOhBFiFWURhqnps1bJ8sKadaZxhhlcHdtB6frRjU7eNZDguq9cse20ayqpDOWZ47jL3GYZQ993blTFolSRcIb4uj+NJNJc0ujd7QOU+GVgir38T544m2/gXsn3emrlGVI/Jt08yv5QS/3+dXo7dW9z//0mWNucPiQeYIOfMG3C9LukYGKHv7Hy/nPDfsd3EiiwXgrzd85lAKLn6zvVNY1uUuDLxNR6X1Jru6trwTnJ1rX4r5+iVVOS0NJI6bYkoo5OwyZtG3E+McT6JfKZIscSo04Mwvxq2Wh/en03i5y41mrs6SEeBWSnEmIkx+hR2lkNeOIvU8JnPN5OIAxBiadQ713g6jlw1PwTV5hW+0rdetXkVAL1jtLgi9pnYnT8Q3Ayp2Iwltg1d2ClHwh26V5femrXEmDFJpNfmrfeNh9QdNLw="
+  file:
+    - client/build/jfx/native/Data Acquisition Client.dmg
+    - server/build/distributions/server.zip
+    - log2csv/build/distributions/log2csv.zip
+  skip_cleanup: true
+  on:
+    tags: true
