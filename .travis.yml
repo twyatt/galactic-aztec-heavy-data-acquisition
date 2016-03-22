@@ -1,17 +1,27 @@
 language: java
 
 os:
-  - linux
   - osx
+  - linux
 
-jdk: oraclejdk8
+before_install: |
+  if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then
+    wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-macosx-x64.dmg -O jdk-8u73-macosx-x64.dmg
+    hdiutil mount jdk-8u73-macosx-x64.dmg
+    sudo installer -pkg /Volumes/JDK 8 Update 73/JDK 8 Update 73.pkg -target LocalSystem
+  fi
+
+matrix:
+  include:
+    - os: linux
+      jdk: oraclejdk8
+    - os: osx
+      script: ./gradlew clean assemble :client:jfxNative
 
 addons:
   apt:
     packages:
       - oracle-java8-installer
-
-script: ./gradlew clean assemble :client:jfxNative
 
 deploy:
   provider: releases
