@@ -48,7 +48,7 @@ public class MockADS1115 extends ADS1115 {
         if ((x[channel] += 0.01f) > 1000f) x[channel] = 0f; // 0 to 1000
         float s = (float) Math.sin(x[channel]); // -1 to 1
         float sp = (s / 2f) + 0.5f; // 0 to 1
-        return sp * 3300;
+        return sp * 5000f;
     }
 
 }

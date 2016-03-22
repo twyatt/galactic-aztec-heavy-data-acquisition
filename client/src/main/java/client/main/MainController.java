@@ -1,21 +1,16 @@
 package client.main;
 
 import client.Launcher;
+import edu.sdsu.rocket.core.helpers.PressureValueTranslatorFactory;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorClient;
 import eu.hansolo.enzo.common.Section;
 import eu.hansolo.enzo.gauge.Gauge;
 import eu.hansolo.enzo.gauge.GaugeBuilder;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
@@ -51,13 +46,8 @@ public class MainController {
     @FXML private Label signalLabel;
     @FXML private Label powerLabel;
     @FXML private GridPane gaugePane;
+    @FXML private GridPane chartPane;
 
-    private int chartIndex;
-    private static final int BAROMETER_DATA_POINTS     = 50;
-    
-    private NumberAxis barometerX;
-    private Series<Number, Number> barometerPressureData = new XYChart.Series<>();
-    
     private static final Format LATENCY_FORMAT = new DecimalFormat("#.#");
 
     /**
@@ -69,22 +59,12 @@ public class MainController {
         client.setListener(new SensorClient.SensorClientListener() {
             @Override
             public void onPingResponse(final long latency) {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateLatency((float) latency / NANOSECONDS_PER_MILLISECOND);
-                    }
-                });
+                Platform.runLater(() -> updateLatency((float) latency / NANOSECONDS_PER_MILLISECOND));
             }
             
             @Override
             public void onSensorsUpdated() {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateSensors();
-                    }
-                });
+                Platform.runLater(() -> updateSensors());
             }
         });
     }
@@ -98,19 +78,19 @@ public class MainController {
      */
     @FXML
     private void initialize() {
-        frequencySlider.valueProperty().addListener(new ChangeListener<Number>() {
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                int value = newValue.intValue();
-                frequencyLabel.setText(value + " Hz");
-                client.setFrequency(value);
-            }
+        frequencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            int value = newValue.intValue();
+            frequencyLabel.setText(value + " Hz");
+            client.setFrequency(value);
         });
         
-        createSensors();
+        createGauges();
+//        createCharts();
+
         loadSettings();
     }
 
-    private void createSensors() {
+    private void createGauges() {
         final GaugeSettings voltageSettingsADS1114 = new GaugeSettings()
                 .setUnit("mV")
                 .setMaxValue(5500)
@@ -132,6 +112,7 @@ public class MainController {
 
         gaugeControllers = new GaugeController[] {
                 new GaugeController("LOX")
+                        .setTranslator(PressureValueTranslatorFactory.getLOX())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -144,6 +125,7 @@ public class MainController {
                                 }})),
 
                 new GaugeController("Kerosene")
+                        .setTranslator(PressureValueTranslatorFactory.getKerosene())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -156,6 +138,7 @@ public class MainController {
                                 }})),
 
                 new GaugeController("Helium")
+                        .setTranslator(PressureValueTranslatorFactory.getHelium())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -168,6 +151,7 @@ public class MainController {
                                 }})),
 
                 new GaugeController("Motor")
+                        .setTranslator(PressureValueTranslatorFactory.getMotor())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -180,6 +164,7 @@ public class MainController {
                                 }})),
 
                 new GaugeController("RCS Low")
+                        .setTranslator(PressureValueTranslatorFactory.getRcsLow())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -192,6 +177,7 @@ public class MainController {
                                 }})),
 
                 new GaugeController("RCS High")
+                        .setTranslator(PressureValueTranslatorFactory.getRcsHigh())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
@@ -213,6 +199,9 @@ public class MainController {
             controller.setGauge(gauge);
 
             gaugePane.add(gauge, col, row);
+
+            LineChart<Number, Number> chart = (LineChart<Number, Number>) chartPane.getChildren().get(i);
+            controller.setChart(chart);
         }
     }
 
@@ -232,53 +221,17 @@ public class MainController {
                 .build();
     }
 
-    private LineChart<Number, Number> makeChart(String title, NumberAxis x, NumberAxis y) {
-        LineChart<Number, Number> chart = new LineChart<>(x, y);
-        chart.setTitle(title);
-        chart.setCreateSymbols(false);
-        chart.setAnimated(false);
-        chart.setHorizontalZeroLineVisible(true);
-        chart.setLegendSide(Side.RIGHT);
-        return chart;
-
-//        NumberAxis axisX = new NumberAxis();
-//        axisX.setAutoRanging(false);
-//        axisX.setTickLabelsVisible(false);
-//
-//        NumberAxis axisY = new NumberAxis();
-//        axisY.setLabel("Pressure (PSI)");
-//        axisY.setForceZeroInRange(true);
-//        LineChart<Number, Number> chart = makeChart(label, axisX, axisY);
-    }
-
-    protected void updateLatency(float latency) {
+    private void updateLatency(float latency) {
         latencyLabel.setText(LATENCY_FORMAT.format(latency) + " ms");
     }
     
-    @FXML
-    public void clearSensors() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                barometerPressureData.getData().clear();
-                
-                signalLabel.setText("?");
-                powerLabel.setText("?");
-            }
-        });
-    }
-    
-    public void updateSensors() {
+    private void updateSensors() {
         // toolbar
         updateSignalStrength();
-        updatePower(sensors);
-        
-        // gauges
-        updatePressures(sensors);
-        
-        // charts
-        chartIndex++;
-        updateBarometer(sensors);
+        updatePower();
+
+        updateGauges();
+//        updateCharts();
     }
 
     private void updateSignalStrength() {
@@ -293,7 +246,7 @@ public class MainController {
         }
     }
 
-    private void updatePower(Sensors sensors) {
+    private void updatePower() {
         if (sensors.system.getIsPowerGood()) {
             powerLabel.setText("GOOD");
         } else {
@@ -301,26 +254,22 @@ public class MainController {
         }
     }
 
-    private void updateBarometer(Sensors sensors) {
-//        float pressure = sensors.barometer.getPressure();
-//        barometerX.setLowerBound(chartIndex - BAROMETER_DATA_POINTS + 1);
-//        barometerX.setUpperBound(chartIndex);
-//        while (barometerPressureData.getData().size() >= BAROMETER_DATA_POINTS) {
-//            barometerPressureData.getData().remove(0);
-//        }
-//        barometerPressureData.getData().add(new XYChart.Data<>(chartIndex, pressure));
-    }
-
-    private void updatePressures(Sensors sensors) {
+    private void updateGauges() {
         for (int i = 0; i < gaugeControllers.length; i++) {
-            GaugeController gaugeController = gaugeControllers[i];
-            Gauge gauge = gaugeController.getGauge();
             if (i >= sensors.analog.count) {
                 break;
             }
-            gauge.setValue(sensors.analog.get(i));
+            GaugeController gaugeController = gaugeControllers[i];
+            gaugeController.setValue(sensors.analog.get(i));
         }
     }
+
+//    private void updateCharts() {
+//        for (int i = 0; i < chartControllers.length; i++) {
+//            ChartController chartController = chartControllers[i];
+//            chartController.addValue(sensors.analog.get(i));
+//        }
+//    }
 
     @FXML
     private void onDisplayPSI(ActionEvent event) {
@@ -335,8 +284,7 @@ public class MainController {
     }
 
     private void setMode(GaugeController.Mode mode) {
-        for (int i = 0; i < gaugeControllers.length; i++) {
-            GaugeController gaugeController = gaugeControllers[i];
+        for (GaugeController gaugeController : gaugeControllers) {
             gaugeController.setMode(mode);
         }
     }
@@ -349,22 +297,19 @@ public class MainController {
                 client.setFrequency((float) frequencySlider.getValue());
                 client.start(addr, PORT);
 
-                pingThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (!Thread.currentThread().isInterrupted()) {
-                            try {
-                                Thread.sleep(1000L);
-                            } catch (InterruptedException e) {
-                                System.err.println(e);
-                                return;
-                            }
+                pingThread = new Thread(() -> {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            Thread.sleep(1000L);
+                        } catch (InterruptedException e) {
+                            System.err.println(e);
+                            return;
+                        }
 
-                            try {
-                                client.sendPingRequest();
-                            } catch (IOException e) {
-                                System.err.println(e);
-                            }
+                        try {
+                            client.sendPingRequest();
+                        } catch (IOException e) {
+                            System.err.println(e);
                         }
                     }
                 });
@@ -410,8 +355,6 @@ public class MainController {
 
     /**
      * Determines if a shutdown (quit) process should commence.
-     * 
-     * @return
      */
     public boolean requestQuit() {
         saveSettings();
