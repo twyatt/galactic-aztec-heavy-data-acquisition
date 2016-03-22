@@ -27,7 +27,7 @@ public class MainController {
 
     private static final long NANOSECONDS_PER_MILLISECOND = 1000000L;
 
-    public static final Color WARNING_COLOR = Color.color(0.8, 0.8, 0);
+    public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
 
     private static final int SENSOR_COLUMNS = 3;

@@ -1,3 +1,7 @@
 .gauge .value {
     -fx-fill: ladder(-base, black 49%, white 50%);
 }
+
+.default-color0.chart-series-line {
+    -fx-stroke: black;
+}

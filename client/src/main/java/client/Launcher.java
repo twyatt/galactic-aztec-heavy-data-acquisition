@@ -1,16 +1,14 @@
 package client;
 
-import java.net.URL;
-
+import client.main.MainController;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import client.main.MainController;
+
+import java.net.URL;
 
 public class Launcher extends Application {
 
@@ -26,23 +24,22 @@ public class Launcher extends Application {
 		final MainController controller = loader.getController();
 		Scene scene = new Scene(root);
 		
-		stage.setWidth(1280);
-		stage.setHeight(800);
+        stage.setMinWidth(640);
+        stage.setMinHeight(480);
+		stage.setWidth(1024);
+		stage.setHeight(768);
 		stage.setTitle(NAME);
 		stage.setScene(scene);
 		stage.show();
 		
-		scene.getWindow().setOnCloseRequest(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent event) {
-				if (controller.requestQuit()) {
-					Platform.exit();
-					System.exit(0);
-				} else {
-					event.consume();
-				}
-			}
-		});
+		scene.getWindow().setOnCloseRequest(event -> {
+            if (controller.requestQuit()) {
+                Platform.exit();
+                System.exit(0);
+            } else {
+                event.consume();
+            }
+        });
 	}
 	
 	public static void main(String[] args) {

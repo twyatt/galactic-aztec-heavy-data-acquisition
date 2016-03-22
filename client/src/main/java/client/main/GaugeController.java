@@ -118,17 +118,17 @@ public class GaugeController {
         }
         XYChart.Series<Number, Number> series = chart.getData().get(0);
         series.getData().add(new XYChart.Data<>(x, value));
-
-        GaugeSettings settings = getActiveSettings();
-        if (settings.sections != null) {
-            for (Section section : settings.sections) {
-                if (value > section.getStart() && value < section.getStop()) {
-                    setChartLineColor(section.getColor());
-                    return;
-                }
-            }
-        }
-        setChartLineColor(Color.BLACK);
+//
+//        GaugeSettings settings = getActiveSettings();
+//        if (settings.sections != null) {
+//            for (Section section : settings.sections) {
+//                if (value > section.getStart() && value < section.getStop()) {
+//                    setChartLineColor(section.getColor());
+//                    return;
+//                }
+//            }
+//        }
+//        setChartLineColor(Color.BLACK);
     }
 
     private void setChartLineColor(Color color) {
