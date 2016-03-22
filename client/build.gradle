@@ -1,18 +1,26 @@
-apply from: 'javafx.plugin'
+apply plugin: 'java'
+apply plugin: 'javafx-gradle-plugin'
 
-// https://jaxenter.com/tutorial-a-guide-to-the-gradle-javafx-plugin-105730.html
-javafx {
-    // Application name and ID presented by target OS
-    appID 'GalacticAztecClient'
-    appName 'Galactic Aztec Client'
+repositories {
+    mavenCentral()
+}
 
-    // Main class of application
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.4.1'
+    }
+}
+
+jfx {
     mainClass 'client.Launcher'
-
-    // JVM arguments, system properties, application command line arguments
-    jvmArgs = ['-XX:+AggressiveOpts', '-XX:CompileThreshold=1']
-    systemProperties = ['prism.disableRegionCaching':'true']
-    arguments = ['-l', '--fast']
+    appName 'Data Acquisition Client'
+    vendor 'SDSU Rocket Project'
+    jfxMainAppJarName 'data-acquisition.jar'
+    nativeReleaseVersion null
 }
 
 dependencies {

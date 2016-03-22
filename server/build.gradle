@@ -1,6 +1,12 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
+repositories {
+    maven {
+        url "https://oss.sonatype.org/content/groups/public"
+    }
+}
+
 mainClassName = 'edu.sdsu.rocket.server.Launcher'
 
 dependencies {
