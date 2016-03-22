@@ -24,8 +24,11 @@ import java.util.Optional;
 import java.util.prefs.Preferences;
 
 public class MainController {
-    
+
     private static final long NANOSECONDS_PER_MILLISECOND = 1000000L;
+
+    public static final Color WARNING_COLOR = Color.color(0.8, 0.8, 0);
+    public static final Color DANGER_COLOR  = Color.RED;
 
     private static final int SENSOR_COLUMNS = 3;
     private GaugeController[] gaugeControllers;
@@ -84,21 +87,19 @@ public class MainController {
             client.setFrequency(value);
         });
         
-        createGauges();
-//        createCharts();
-
+        setupGauges();
         loadSettings();
     }
 
-    private void createGauges() {
+    private void setupGauges() {
         final GaugeSettings voltageSettingsADS1114 = new GaugeSettings()
                 .setUnit("mV")
                 .setMaxValue(5500)
                 .setMinorTickSpace(50)
                 .setMajorTickSpace(500)
                 .setSections(new ArrayList<Section>() {{
-                    add(new Section(5000, 5300, Color.YELLOW));
-                    add(new Section(5300, 5500, Color.RED));
+                    add(new Section(5000, 5300, WARNING_COLOR));
+                    add(new Section(5300, 5500, DANGER_COLOR));
                 }});
         final GaugeSettings voltageSettingsADS1100 = new GaugeSettings()
                 .setUnit("mV")
@@ -106,8 +107,8 @@ public class MainController {
                 .setMinorTickSpace(50)
                 .setMajorTickSpace(500)
                 .setSections(new ArrayList<Section>() {{
-                    add(new Section(5000, 5200, Color.YELLOW));
-                    add(new Section(5200, 5500, Color.RED));
+                    add(new Section(5000, 5200, WARNING_COLOR));
+                    add(new Section(5200, 5500, DANGER_COLOR));
                 }});
 
         gaugeControllers = new GaugeController[] {
@@ -120,8 +121,8 @@ public class MainController {
                                 .setMinorTickSpace(10)
                                 .setMajorTickSpace(100)
                                 .setSections(new ArrayList<Section>() {{
-                                        add(new Section(600, 700, Color.YELLOW));
-                                        add(new Section(700, 750, Color.RED));
+                                        add(new Section(600, 700, WARNING_COLOR));
+                                        add(new Section(700, 750, DANGER_COLOR));
                                 }})),
 
                 new GaugeController("Kerosene")
@@ -133,8 +134,8 @@ public class MainController {
                                 .setMinorTickSpace(10)
                                 .setMajorTickSpace(100)
                                 .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, Color.RED));
+                                        add(new Section(3300, 3600, WARNING_COLOR));
+                                        add(new Section(3600, 5000, DANGER_COLOR));
                                 }})),
 
                 new GaugeController("Helium")
@@ -146,8 +147,8 @@ public class MainController {
                                 .setMinorTickSpace(20)
                                 .setMajorTickSpace(200)
                                 .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, Color.RED));
+                                        add(new Section(3300, 3600, WARNING_COLOR));
+                                        add(new Section(3600, 5000, DANGER_COLOR));
                                 }})),
 
                 new GaugeController("Motor")
@@ -160,7 +161,7 @@ public class MainController {
                                 .setMajorTickSpace(100)
                                 .setSections(new ArrayList<Section>() {{
                                         add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, Color.RED));
+                                        add(new Section(3600, 5000, DANGER_COLOR));
                                 }})),
 
                 new GaugeController("RCS Low")
@@ -172,8 +173,8 @@ public class MainController {
                                 .setMinorTickSpace(10)
                                 .setMajorTickSpace(100)
                                 .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, Color.RED));
+                                        add(new Section(3300, 3600, WARNING_COLOR));
+                                        add(new Section(3600, 5000, DANGER_COLOR));
                                 }})),
 
                 new GaugeController("RCS High")
@@ -185,8 +186,8 @@ public class MainController {
                                 .setMinorTickSpace(50)
                                 .setMajorTickSpace(500)
                                 .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, Color.RED));
+                                        add(new Section(3300, 3600, WARNING_COLOR));
+                                        add(new Section(3600, 5000, DANGER_COLOR));
                                 }})),
         };
 
@@ -231,7 +232,6 @@ public class MainController {
         updatePower();
 
         updateGauges();
-//        updateCharts();
     }
 
     private void updateSignalStrength() {
@@ -263,13 +263,6 @@ public class MainController {
             gaugeController.setValue(sensors.analog.get(i));
         }
     }
-
-//    private void updateCharts() {
-//        for (int i = 0; i < chartControllers.length; i++) {
-//            ChartController chartController = chartControllers[i];
-//            chartController.addValue(sensors.analog.get(i));
-//        }
-//    }
 
     @FXML
     private void onDisplayPSI(ActionEvent event) {

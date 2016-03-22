@@ -1,15 +1,15 @@
 package client.main;
 
 import edu.sdsu.rocket.core.helpers.ValueTranslator;
+import eu.hansolo.enzo.common.Section;
 import eu.hansolo.enzo.gauge.Gauge;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.paint.Color;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class GaugeController {
 
@@ -31,6 +31,7 @@ public class GaugeController {
     private double numberOfDataPoints;
     private LineChart<Number, Number> chart;
     private int x;
+    private Color chartColor;
 
     public GaugeController(String label) {
         this.label = label;
@@ -117,6 +118,38 @@ public class GaugeController {
         }
         XYChart.Series<Number, Number> series = chart.getData().get(0);
         series.getData().add(new XYChart.Data<>(x, value));
+
+        GaugeSettings settings = getActiveSettings();
+        if (settings.sections != null) {
+            for (Section section : settings.sections) {
+                if (value > section.getStart() && value < section.getStop()) {
+                    setChartLineColor(section.getColor());
+                    return;
+                }
+            }
+        }
+        setChartLineColor(Color.BLACK);
+    }
+
+    private void setChartLineColor(Color color) {
+        if (color != null || !color.equals(this.chartColor)) {
+            this.chartColor = color;
+            chart.applyCss();
+
+            for (int i = 0; i < chart.getData().size(); i++) {
+                Set<Node> nodes = chart.lookupAll(".series" + i);
+                for (Node n : nodes) {
+                    n.setStyle("-fx-stroke: " + toRgb(color) + ";");
+                }
+            }
+        }
+    }
+
+    public static String toRgb(Color color) {
+        int r = (int) (color.getRed() * 255);
+        int g = (int) (color.getGreen() * 255);
+        int b = (int) (color.getBlue() * 255);
+        return "rgb(" + r + ", " + g + ", " + b + ")";
     }
 
     private void updateGauge() {

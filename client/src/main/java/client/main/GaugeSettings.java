@@ -7,7 +7,7 @@ import java.util.List;
 public class GaugeSettings {
 
     String unit;
-    double maxValue = 5000;
+    double maxValue;
     List<Section> sections;
     int minorTickSpace;
     int majorTickSpace;
