@@ -109,7 +109,7 @@ public class Application {
             System.out.println(ads1114[i]);
 
             final int index = i;
-            manager.add(new DeviceManager.Device() {
+            DeviceRunnable deviceRunnable = manager.add(new DeviceManager.Device() {
                 @Override
                 public void loop() throws IOException, InterruptedException {
                     float value = ads1114[index].readMillivolts();
@@ -117,6 +117,10 @@ public class Application {
                     ads1114log[index].writeValue(value);
                 }
             });
+            if (config.test) {
+                int frequency = ads1114[index].getRate().getSamplesPerSecond() * 2;
+                deviceRunnable.setFrequency(frequency);
+            }
         }
 
 

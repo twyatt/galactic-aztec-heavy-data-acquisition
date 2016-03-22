@@ -44,7 +44,12 @@ public abstract class RateLimitedRunnable implements Runnable {
 		if (frequency == 0f) {
 			throw new IllegalArgumentException("Frequency cannot be zero.");
 		}
-		setSleep(Math.round(1000f / frequency));
+
+        if (frequency > 60f) {
+            setSleepNanoseconds(Math.round(NANOSECONDS_PER_MILLISECOND * 1000f / frequency));
+        } else {
+            setSleep(Math.round(1000f / frequency));
+        }
 	}
 	
 	/**
@@ -60,7 +65,7 @@ public abstract class RateLimitedRunnable implements Runnable {
 	 */
 	public void setSleepNanoseconds(long nanoseconds) {
 		// http://stackoverflow.com/q/4300653/196486
-		if (nanoseconds > 999999) {
+		if (nanoseconds >= NANOSECONDS_PER_MILLISECOND) {
 			sleep_ms = nanoseconds / NANOSECONDS_PER_MILLISECOND;
 			sleep_ns = TimeUnit.NANOSECONDS.toMillis(nanoseconds);
 		} else {
@@ -108,11 +113,14 @@ public abstract class RateLimitedRunnable implements Runnable {
 				loop();
 				
 				if (sleep_ms != 0 || sleep_ns != 0) {
-					if (sleep_ns == 0) {
-						Thread.sleep(sleep_ms);
-					} else {
-						Thread.sleep(sleep_ms, (int) sleep_ns);
-					}
+					Thread.sleep(sleep_ms);
+
+                    // How to suspend a java thread for a small period of time, like 100 nanoseconds?
+                    // http://stackoverflow.com/a/11499351/196486
+
+					// busy wait for the nanosecond portion :(
+					long start = System.nanoTime();
+					while (start + sleep_ns >= System.nanoTime());
 				}
 				
 				synchronized (lock) {
