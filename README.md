@@ -15,7 +15,7 @@ Designed for the [SDSU Rocket Project] to be used on the [Galactic Aztec Heavy] 
 
 Browse the [latest release] page to determine the latest version, then SSH into your Raspberry Pi and issue a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/0.5.2/server.tar | tar xvz
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/0.5.2/server.tar | tar xv
 ```
 _Where `0.5.2` should be replaced with the latest version number appearing on the [latest release] page._
 
@@ -58,13 +58,10 @@ Simply download and install the OS X package (named `DataAcquisitionClient.dmg`)
 
 ### Windows
 
-Download the [latest client release] sources (labeled `Source Code (zip)`) and open the Windows Command Prompt. Browse to the directory where you downloaded the source code to and run the following commands to build the application:
+Download and extract the sources (labeled `Source Code (zip)`) from the [latest release] page. Open the Windows Command Prompt and Browse to the directory where you extracted the source code, and run the following commands to build the application:
 ```
-gradlew.bat :client:jfxNative
+gradlew.bat :client:jfxRun
 ```
-
-The compiled application will be saved in `client/build/jfx/native/`. Alternatively you could run the JAR directly that is saved to `client/build/libs/`.
-
 
 
 [Galactic Aztec Data Acquisition]: https://github.com/twyatt/galactic-aztec-data-acquisition
