@@ -1,4 +1,10 @@
 apply plugin: 'java'
+
+/**
+ * Using javafx-gradle-plugin enhances your build-script with javapackager-power.
+ *
+ * https://github.com/FibreFoX/javafx-gradle-plugin
+ */
 apply plugin: 'javafx-gradle-plugin'
 
 repositories {
@@ -17,9 +23,9 @@ buildscript {
 
 jfx {
     mainClass 'client.Launcher'
-    appName 'Data Acquisition Client'
+    appName 'DataAcquisitionClient'
     vendor 'SDSU Rocket Project'
-    jfxMainAppJarName 'data-acquisition.jar'
+    jfxMainAppJarName 'data-acquisition-client.jar'
     nativeReleaseVersion null
 }
 

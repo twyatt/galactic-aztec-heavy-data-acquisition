@@ -1,36 +1,40 @@
 language: java
 
-os:
-  - osx
-  - linux
-
 before_install: |
   if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then
-    wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-macosx-x64.dmg -O jdk-8u73-macosx-x64.dmg
-    hdiutil mount jdk-8u73-macosx-x64.dmg
-    sudo installer -pkg /Volumes/JDK 8 Update 73/JDK 8 Update 73.pkg -target LocalSystem
+    wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" "$JDK_DOWNLOAD_URL" -O "$JDK_FILENAME"
+    hdiutil mount "$JDK_FILENAME"
+    sudo installer -pkg "/Volumes/$JDK_NAME/$JDK_NAME.pkg" -target LocalSystem
+    java -Xmx32m -version
+    javac -J-Xmx32m -version
   fi
 
 matrix:
   include:
-    - os: linux
-      jdk: oraclejdk8
     - os: osx
       script: ./gradlew clean assemble :client:jfxNative
-
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
-
-deploy:
-  provider: releases
-  api_key:
-    secure: "kaF5Z4L9NjVqzjdY3GbyGMV2NgYLygkAf99qIPSrm3viUyNBmK+rVmZQuIA8y930fRPt7m0I2KmC1qIsAyVidiDX4MDFHg1b1m4BCwg63Z8s489E66wwOVOIuu+pOxiDONz4nyWTDHUQf/KQUnD3fzTg9nCDL69AYy/AF3v8C4T/GZyb9nLChnR5iM08SA8/rznlosQi6YDCebjX3oVY3jgbF2pZtuMDsznuDE4rEuXKXkK6Le+sp2yZtHjXnwOhBFiFWURhqnps1bJ8sKadaZxhhlcHdtB6frRjU7eNZDguq9cse20ayqpDOWZ47jL3GYZQ993blTFolSRcIb4uj+NJNJc0ujd7QOU+GVgir38T544m2/gXsn3emrlGVI/Jt08yv5QS/3+dXo7dW9z//0mWNucPiQeYIOfMG3C9LukYGKHv7Hy/nPDfsd3EiiwXgrzd85lAKLn6zvVNY1uUuDLxNR6X1Jru6trwTnJ1rX4r5+iVVOS0NJI6bYkoo5OwyZtG3E+McT6JfKZIscSo04Mwvxq2Wh/en03i5y41mrs6SEeBWSnEmIkx+hR2lkNeOIvU8JnPN5OIAxBiadQ713g6jlw1PwTV5hW+0rdetXkVAL1jtLgi9pnYnT8Q3Ayp2Iwltg1d2ClHwh26V5femrXEmDFJpNfmrfeNh9QdNLw="
-  file:
-    - client/build/jfx/native/Data Acquisition Client.dmg
-    - server/build/distributions/server.zip
-    - log2csv/build/distributions/log2csv.zip
-  skip_cleanup: true
-  on:
-    tags: true
+      deploy:
+        provider: releases
+        api_key:
+          secure: "kaF5Z4L9NjVqzjdY3GbyGMV2NgYLygkAf99qIPSrm3viUyNBmK+rVmZQuIA8y930fRPt7m0I2KmC1qIsAyVidiDX4MDFHg1b1m4BCwg63Z8s489E66wwOVOIuu+pOxiDONz4nyWTDHUQf/KQUnD3fzTg9nCDL69AYy/AF3v8C4T/GZyb9nLChnR5iM08SA8/rznlosQi6YDCebjX3oVY3jgbF2pZtuMDsznuDE4rEuXKXkK6Le+sp2yZtHjXnwOhBFiFWURhqnps1bJ8sKadaZxhhlcHdtB6frRjU7eNZDguq9cse20ayqpDOWZ47jL3GYZQ993blTFolSRcIb4uj+NJNJc0ujd7QOU+GVgir38T544m2/gXsn3emrlGVI/Jt08yv5QS/3+dXo7dW9z//0mWNucPiQeYIOfMG3C9LukYGKHv7Hy/nPDfsd3EiiwXgrzd85lAKLn6zvVNY1uUuDLxNR6X1Jru6trwTnJ1rX4r5+iVVOS0NJI6bYkoo5OwyZtG3E+McT6JfKZIscSo04Mwvxq2Wh/en03i5y41mrs6SEeBWSnEmIkx+hR2lkNeOIvU8JnPN5OIAxBiadQ713g6jlw1PwTV5hW+0rdetXkVAL1jtLgi9pnYnT8Q3Ayp2Iwltg1d2ClHwh26V5femrXEmDFJpNfmrfeNh9QdNLw="
+        file:
+          - "client/build/jfx/native/DataAcquisitionClient.dmg"
+        skip_cleanup: true
+        on:
+          tags: true
+    - os: linux
+      jdk: oraclejdk8
+      addons:
+        apt:
+          packages:
+            - oracle-java8-installer
+      deploy:
+        provider: releases
+        api_key:
+          secure: "kaF5Z4L9NjVqzjdY3GbyGMV2NgYLygkAf99qIPSrm3viUyNBmK+rVmZQuIA8y930fRPt7m0I2KmC1qIsAyVidiDX4MDFHg1b1m4BCwg63Z8s489E66wwOVOIuu+pOxiDONz4nyWTDHUQf/KQUnD3fzTg9nCDL69AYy/AF3v8C4T/GZyb9nLChnR5iM08SA8/rznlosQi6YDCebjX3oVY3jgbF2pZtuMDsznuDE4rEuXKXkK6Le+sp2yZtHjXnwOhBFiFWURhqnps1bJ8sKadaZxhhlcHdtB6frRjU7eNZDguq9cse20ayqpDOWZ47jL3GYZQ993blTFolSRcIb4uj+NJNJc0ujd7QOU+GVgir38T544m2/gXsn3emrlGVI/Jt08yv5QS/3+dXo7dW9z//0mWNucPiQeYIOfMG3C9LukYGKHv7Hy/nPDfsd3EiiwXgrzd85lAKLn6zvVNY1uUuDLxNR6X1Jru6trwTnJ1rX4r5+iVVOS0NJI6bYkoo5OwyZtG3E+McT6JfKZIscSo04Mwvxq2Wh/en03i5y41mrs6SEeBWSnEmIkx+hR2lkNeOIvU8JnPN5OIAxBiadQ713g6jlw1PwTV5hW+0rdetXkVAL1jtLgi9pnYnT8Q3Ayp2Iwltg1d2ClHwh26V5femrXEmDFJpNfmrfeNh9QdNLw="
+        file:
+          - "server/build/distributions/server.zip"
+          - "log2csv/build/distributions/log2csv.zip"
+        skip_cleanup: true
+        on:
+          tags: true
