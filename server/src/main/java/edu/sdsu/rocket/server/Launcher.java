@@ -7,12 +7,8 @@ public class Launcher {
     public static void main(String[] args) throws Exception {
         final Config config = new Config(args);
 
-        if (config.help) {
-            System.out.println("usage: server [OPTIONS] <LOG DIRECTORY> [<LOG DIRECTORY> ...]");
-            System.out.println("--test           Enabled testing mode");
-            System.out.println("--debug          Enabled debug mode");
-            System.out.println("--allow-no-logs  Allow application to run without logging");
-            System.exit(0);
+        if (config.help || args.length == 0) {
+            printUsage();
         }
 
         if (config.test) {
@@ -39,6 +35,15 @@ public class Launcher {
         while (true) {
             app.loop();
         }
+    }
+
+    private static void printUsage() {
+        System.out.println("usage: server [OPTIONS] <LOG DIRECTORY> [<LOG DIRECTORY> ...]");
+        System.out.println();
+        System.out.println("  --test           Enable testing mode");
+        System.out.println("  --debug          Enable debug mode");
+        System.out.println("  --allow-no-logs  Allow application to run without logging");
+        System.out.println();
     }
 
 }
