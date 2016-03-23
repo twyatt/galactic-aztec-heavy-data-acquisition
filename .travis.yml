@@ -2,6 +2,9 @@ language: java
 
 before_install: |
   if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then
+    export JDK_NAME="JDK 8 Update 73"
+    export JDK_FILENAME="jdk-8u73-macosx-x64.dmg"
+    export JDK_DOWNLOAD_URL="http://download.oracle.com/otn-pub/java/jdk/8u73-b02/$JDK_FILENAME"
     wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" "$JDK_DOWNLOAD_URL" -O "$JDK_FILENAME"
     hdiutil mount "$JDK_FILENAME"
     sudo installer -pkg "/Volumes/$JDK_NAME/$JDK_NAME.pkg" -target LocalSystem
