@@ -9,6 +9,7 @@ public class Launcher {
 
         if (config.help || args.length == 0) {
             printUsage();
+            System.exit(0);
         }
 
         if (config.test) {
