@@ -28,7 +28,7 @@ public class Logger {
         for (File dir : directories) {
             File d = new File(dir + FILE_SEPARATOR + timestamp);
             if (!d.exists()) {
-                System.out.println("mkdir " + d);
+                System.out.println("mkdir -p " + d);
                 if (!d.mkdirs()) {
                     throw new RuntimeException("Failed to create directory: " + d);
                 }

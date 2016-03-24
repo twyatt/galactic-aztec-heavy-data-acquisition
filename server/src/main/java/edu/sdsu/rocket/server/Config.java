@@ -27,11 +27,7 @@ public class Config {
                     allowNoLogs = true;
                 }
             } else {
-                File dir = new File(arg);
-                if (!dir.exists()) {
-                    throw new FileNotFoundException(dir.getAbsolutePath());
-                }
-                logDirs.add(dir);
+                logDirs.add(new File(arg));
             }
         }
     }
