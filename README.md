@@ -19,12 +19,7 @@ wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releas
 ```
 _Where `0.5.3` should be replaced with the latest version number appearing on the [latest release] page._
 
-The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server, but it expects that the directories already exist. If you don't already have a `logs` directory you can create it by running the following command on your Raspberry Pi:
-```
-mkdir logs/
-```
-
-Then the server can be started with the following command:
+The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server:
 ```
 server/bin/server logs/
 ```
@@ -58,13 +53,25 @@ Simply download and install the OS X package (named `DataAcquisitionClient.dmg`)
 
 ### Windows
 
-If you don't already have [Java SE Development Kit 8] installed, then download and install it.
+Locate and download the latest `DataAcquisitionClient.zip` file from the [releases page]. Extract and run `DataAcquisitionClient.exe`.
 
-Then download and extract the sources (labeled `Source Code (zip)`) from the [latest release] page. Open the Windows Command Prompt and browse to the directory where you extracted the source code, and run the following command to build and run the application:
-```
-cd Downloads\galactic-aztec-heavy-data-acquisition-*
-gradlew.bat :client:jfxRun
-```
+### Building From Source
+
+_If you don't already have [Java SE Development Kit 8] installed, download and install it._
+
+#### OS X
+
+1. Download and extract the [latest Source code (zip)].
+1. Open the `build.command` script.
+
+The built application will be saved into the `client/build/jfx/native/` sub-directory.
+
+#### Windows
+
+1. Download and extract the [latest Source code (zip)].
+1. Open the `build.bat` script.
+
+The built application will be saved into the `client/build/jfx/native/` sub-directory.
 
 
 [Galactic Aztec Data Acquisition]: https://github.com/twyatt/galactic-aztec-data-acquisition
@@ -72,3 +79,6 @@ gradlew.bat :client:jfxRun
 [SDSU Rocket Project]: http://rocket.sdsu.edu/
 [Galactic Aztec Heavy]: http://rocket.sdsu.edu/rockets#galactic-aztec-heavy
 [latest release]: https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/latest
+[releases page]: https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases
+[Java SE Development Kit 8]: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+[latest Source code (zip)]: https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/zipball/master
