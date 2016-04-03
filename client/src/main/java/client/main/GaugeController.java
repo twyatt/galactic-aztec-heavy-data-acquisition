@@ -1,7 +1,6 @@
 package client.main;
 
 import edu.sdsu.rocket.core.helpers.ValueTranslator;
-import eu.hansolo.enzo.common.Section;
 import eu.hansolo.enzo.gauge.Gauge;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
@@ -28,9 +27,8 @@ public class GaugeController {
     private Gauge gauge;
 
     // chart
-    private double numberOfDataPoints;
+    private int numberOfDataPoints;
     private LineChart<Number, Number> chart;
-    private int x;
     private Color chartColor;
 
     public GaugeController(String label) {
@@ -49,7 +47,7 @@ public class GaugeController {
 
     public GaugeController setChart(LineChart<Number, Number> chart) {
         this.chart = chart;
-        numberOfDataPoints = ((NumberAxis) chart.getXAxis()).getUpperBound();
+        numberOfDataPoints = (int) ((NumberAxis) chart.getXAxis()).getUpperBound();
 
         clearChart();
         updateChart();
@@ -103,32 +101,27 @@ public class GaugeController {
     }
 
     private void clearChart() {
-        x = 0;
         chart.getData().setAll(Collections.singleton(new XYChart.Series<>()));
     }
 
     public void addChartValue(float value) {
-        x++;
-
-        NumberAxis xAxis = (NumberAxis) chart.getXAxis();
-        xAxis.setLowerBound(x - numberOfDataPoints + 1);
-        xAxis.setUpperBound(x);
-        while (chart.getData().size() >= numberOfDataPoints) {
-            chart.getData().remove(0);
-        }
         XYChart.Series<Number, Number> series = chart.getData().get(0);
-        series.getData().add(new XYChart.Data<>(x, value));
-//
-//        GaugeSettings settings = getActiveSettings();
-//        if (settings.sections != null) {
-//            for (Section section : settings.sections) {
-//                if (value > section.getStart() && value < section.getStop()) {
-//                    setChartLineColor(section.getColor());
-//                    return;
-//                }
-//            }
-//        }
-//        setChartLineColor(Color.BLACK);
+        while (series.getData().size() > numberOfDataPoints) {
+            series.getData().remove(0);
+        }
+
+        reindexData();
+        series.getData().add(new XYChart.Data<>(series.getData().size(), value));
+    }
+
+    /**
+     * Sets the X values to match their indices.
+     */
+    private void reindexData() {
+        XYChart.Series<Number, Number> series = chart.getData().get(0);
+        for (int i = 0; i < series.getData().size(); i++) {
+            series.getData().get(i).setXValue(i);
+        }
     }
 
     private void setChartLineColor(Color color) {
