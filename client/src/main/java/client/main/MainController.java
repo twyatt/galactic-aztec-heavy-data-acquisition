@@ -343,11 +343,13 @@ public class MainController {
     private void saveSettings() {
         Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
         prefs.put("host", hostTextField.getText());
+        prefs.putInt("frequency", (int) frequencySlider.getValue());
     }
 
     private void loadSettings() {
         Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
         hostTextField.setText(prefs.get("host", "raspberrypi"));
+        frequencySlider.setValue(prefs.getInt("frequency", 1));
     }
 
     /**
