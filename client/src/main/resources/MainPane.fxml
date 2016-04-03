@@ -12,7 +12,9 @@
                 <Label text="Host" />
                 <TextField fx:id="hostTextField" prefWidth="150.0" text="" />
                 <Button fx:id="connectButton" mnemonicParsing="false" onAction="#onConnect" text="Connect" />
+
                 <Separator />
+
                 <Label text="Display" />
                 <HBox>
                     <children>
@@ -24,20 +26,31 @@
                         <ToggleButton mnemonicParsing="false" onAction="#onDisplayMillivolts" styleClass="right-pill" text="mV" toggleGroup="$displayGroup" />
                     </children>
                 </HBox>
+
                 <Separator />
+
                 <Label text="Frequency" />
                 <Slider fx:id="frequencySlider" max="60.0" prefWidth="100.0" value="1.0" />
-                <Label fx:id="frequencyLabel" text="1 Hz" />
+                <Label fx:id="frequencyLabel" text="1" />
+                <Label text="Hz" />
+
                 <Separator orientation="VERTICAL" />
+
                 <Label text="Latency" />
                 <Label fx:id="latencyLabel" text="?" />
+                <Label text="ms" />
+
+                <Separator orientation="VERTICAL" />
+
+                <Label text="Temperature" />
+                <Label fx:id="temperatureLabel" text="?" />
+                <Label text="°F" />
+
                 <Separator orientation="VERTICAL" visible="false" />
+
                 <Label text="Signal" visible="false" />
                 <Label fx:id="signalLabel" text="?" visible="false" />
                 <Label text="dBm" visible="false" />
-                <Separator orientation="VERTICAL" visible="false" />
-                <Label text="Power" visible="false" />
-                <Label fx:id="powerLabel" text="?" visible="false" />
             </items>
         </ToolBar>
     </top>

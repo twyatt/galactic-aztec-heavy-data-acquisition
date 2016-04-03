@@ -4,9 +4,9 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public abstract class DeviceInputStream extends DataInputStream {
+public abstract class TimestampInputStream extends DataInputStream {
 
-    public DeviceInputStream(InputStream in) {
+    public TimestampInputStream(InputStream in) {
         super(in);
     }
 

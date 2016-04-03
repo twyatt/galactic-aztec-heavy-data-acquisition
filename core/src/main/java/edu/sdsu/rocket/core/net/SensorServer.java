@@ -1,13 +1,13 @@
 package edu.sdsu.rocket.core.net;
 
+import edu.sdsu.rocket.core.helpers.ByteHelper;
+import edu.sdsu.rocket.core.models.Sensors;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-
-import edu.sdsu.rocket.core.helpers.ByteHelper;
-import edu.sdsu.rocket.core.models.Sensors;
 
 public class SensorServer {
 
@@ -93,7 +93,7 @@ public class SensorServer {
         MESSAGE_BUFFER.putInt(message.number);
         MESSAGE_BUFFER.put(message.id);
         
-        int mask = message.data == null || message.data.length == 0
+        byte mask = message.data == null || message.data.length == 0
                 ? Sensors.ALL_MASK
                 : message.data[0];
         

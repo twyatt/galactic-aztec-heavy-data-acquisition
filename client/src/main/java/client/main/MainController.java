@@ -46,12 +46,13 @@ public class MainController {
     @FXML private Slider frequencySlider;
     @FXML private Label frequencyLabel;
     @FXML private Label latencyLabel;
+    @FXML private Label temperatureLabel;
     @FXML private Label signalLabel;
-    @FXML private Label powerLabel;
     @FXML private GridPane gaugePane;
     @FXML private GridPane chartPane;
 
     private static final Format LATENCY_FORMAT = new DecimalFormat("#.#");
+    private static final Format TEMPERATURE_FORMAT = new DecimalFormat("#.#");
 
     /**
      * Constructor for the controller.
@@ -83,7 +84,7 @@ public class MainController {
     private void initialize() {
         frequencySlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             int value = newValue.intValue();
-            frequencyLabel.setText(value + " Hz");
+            frequencyLabel.setText(String.valueOf(value));
             client.setFrequency(value);
         });
         
@@ -223,15 +224,25 @@ public class MainController {
     }
 
     private void updateLatency(float latency) {
-        latencyLabel.setText(LATENCY_FORMAT.format(latency) + " ms");
+        latencyLabel.setText(LATENCY_FORMAT.format(latency));
     }
     
     private void updateSensors() {
-        // toolbar
         updateSignalStrength();
-        updatePower();
-
         updateGauges();
+        updateTemperature();
+    }
+
+    private void updateTemperature() {
+        if (sensors.system.getRawTemperature() == 0) {
+            temperatureLabel.setText("?");
+        } else {
+            try {
+                temperatureLabel.setText(TEMPERATURE_FORMAT.format(sensors.system.getTemperatureF()));
+            } catch (IllegalArgumentException e) {
+                System.err.println("Failed to format temperature value for display: " + e);
+            }
+        }
     }
 
     private void updateSignalStrength() {
@@ -243,14 +254,6 @@ public class MainController {
             } catch (IllegalArgumentException e) {
                 System.err.println("Failed to format signal strength value for display: " + e);
             }
-        }
-    }
-
-    private void updatePower() {
-        if (sensors.system.getIsPowerGood()) {
-            powerLabel.setText("GOOD");
-        } else {
-            powerLabel.setText("BAD");
         }
     }
 
@@ -330,6 +333,7 @@ public class MainController {
             client.stop();
 
             latencyLabel.setText("?");
+            temperatureLabel.setText("?");
             connectButton.setText(CONNECT);
         }
         

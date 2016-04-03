@@ -1,11 +1,11 @@
 package edu.sdsu.rocket.core.io.devices;
 
-import edu.sdsu.rocket.core.io.DeviceInputStream;
+import edu.sdsu.rocket.core.io.TimestampInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ADS1100InputStream extends DeviceInputStream {
+public class ADS1100InputStream extends TimestampInputStream {
 
     public class Config {
         public int config;

@@ -1,23 +1,17 @@
-package edu.sdsu.rocket.core.io.devices;
-
-import edu.sdsu.rocket.core.io.TimestampInputStream;
+package edu.sdsu.rocket.core.io;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ADS1114InputStream extends TimestampInputStream {
+public class StatusInputStream extends TimestampInputStream {
 
     public class Reading {
         public long timestamp;
-        public float value;
+        public int value;
     }
 
-    public ADS1114InputStream(InputStream in) {
+    public StatusInputStream(InputStream in) {
         super(in);
-    }
-
-    public int readConfig() throws IOException {
-        return readInt();
     }
 
     public Reading readValue() throws IOException {
@@ -28,7 +22,7 @@ public class ADS1114InputStream extends TimestampInputStream {
 
     public void readValue(Reading out) throws IOException {
         out.timestamp = readTimestamp();
-        out.value = readFloat();
+        out.value = readInt();
     }
 
 }

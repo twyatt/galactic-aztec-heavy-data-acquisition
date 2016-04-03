@@ -1,13 +1,11 @@
 package edu.sdsu.rocket.core.models;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Status {
 
 	private final AtomicInteger temperature = new AtomicInteger();
-	private final AtomicBoolean isPowerGood = new AtomicBoolean();
-	
+
 	public void setRawTemperature(int temperature) {
 		this.temperature.set(temperature);
 	}
@@ -15,15 +13,7 @@ public class Status {
 	public int getRawTemperature() {
 		return temperature.get();
 	}
-	
-	public void setIsPowerGood(boolean isPowerGood) {
-		this.isPowerGood.set(isPowerGood);
-	}
-	
-	public boolean getIsPowerGood() {
-		return isPowerGood.get();
-	}
-	
+
 	/**
 	 * System temperature (in degrees C).
 	 * 

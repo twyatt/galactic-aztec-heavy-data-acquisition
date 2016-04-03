@@ -6,11 +6,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public abstract class DeviceOutputStream extends DataOutputStream {
+public abstract class TimestampOutputStream extends DataOutputStream {
 
     private final Stopwatch stopwatch = new Stopwatch();
 
-    public DeviceOutputStream(OutputStream out) {
+    public TimestampOutputStream(OutputStream out) {
         super(out);
     }
 

@@ -11,6 +11,7 @@ public class Config {
     public boolean help;
     public boolean test;
     public boolean debug;
+    public boolean disableSystemStatus;
     public boolean allowNoLogs;
     public final List<File> logDirs = new ArrayList<>();
 
@@ -23,6 +24,8 @@ public class Config {
                     test = true;
                 } else if (arg.equalsIgnoreCase("--debug")) {
                     debug = true;
+                } else if (arg.equalsIgnoreCase("--disable-system-status")) {
+                    disableSystemStatus = true;
                 } else if (arg.equalsIgnoreCase("--allow-no-logs")) {
                     allowNoLogs = true;
                 }
@@ -38,6 +41,7 @@ public class Config {
                 + "help=" + help
                 + ", test=" + test
                 + ", debug=" + debug
+                + ", disable-system-status=" + disableSystemStatus
                 + ", allow-no-logs=" + allowNoLogs
                 + ", logDirs=" + Arrays.toString(logDirs.toArray());
     }

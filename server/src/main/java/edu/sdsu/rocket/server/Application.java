@@ -1,10 +1,10 @@
 package edu.sdsu.rocket.server;
 
-import com.pi4j.io.gpio.*;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
+import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS1100OutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS1114OutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
@@ -57,12 +57,12 @@ public class Application {
     public void setup() throws IOException, InterruptedException {
         setupLogging();
         setupDevices();
-//        setupStatusMonitor();
+        setupStatusMonitor();
         setupServer(4444);
     }
 
     protected void setupLogging() throws IOException {
-        System.out.println("Setup Logging.");
+        System.out.println("Setup Logging");
         log = new Logger(config.logDirs);
 
         OutputStream logStream = log.create("log.txt");
@@ -73,7 +73,7 @@ public class Application {
         System.setOut(new PrintStream(out));
         System.setErr(new PrintStream(err));
 
-        System.out.println("Logging started at " + System.nanoTime() + ".");
+        System.out.println("Logging started at " + System.nanoTime());
     }
     
     protected void setupDevices() throws IOException, InterruptedException {
@@ -159,10 +159,10 @@ public class Application {
     
     private void setupGPS() throws FileNotFoundException {
         if (config.test) {
-            System.out.println("Test mode, skipping setup of GPS [Adafruit Ultimate GPS].");
+            System.out.println("Test mode, skipping setup of GPS");
             return;
         }
-        System.out.println("Setup GPS [Adafruit Ultimate GPS].");
+        System.out.println("Setup GPS");
 
         FileInputStream in = new FileInputStream("/dev/ttyAMA0");
         final PrintWriter writer = new PrintWriter(log.create("gps.txt"));
@@ -171,17 +171,17 @@ public class Application {
         reader.addSentenceListener(new SentenceListener() {
             @Override
             public void readingStarted() {
-                System.out.println("GPS reading started.");
+                System.out.println("GPS reading started");
             }
             
             @Override
             public void readingStopped() {
-                System.out.println("GPS reading stopped.");
+                System.out.println("GPS reading stopped");
             }
             
             @Override
             public void readingPaused() {
-                System.out.println("GPS reading paused.");
+                System.out.println("GPS reading paused");
             }
             
             @Override
@@ -222,21 +222,20 @@ public class Application {
         reader.start();
     }
     
-    private void setupStatusMonitor() {
-        if (config.test) {
+    private void setupStatusMonitor() throws FileNotFoundException {
+        if (config.test || config.disableSystemStatus) {
             return;
         }
-        System.out.println("Setup status monitor.");
-        
-        GpioController gpio = GpioFactory.getInstance();
-        final GpioPinDigitalInput pgood = gpio.provisionDigitalInputPin(RaspiPin.GPIO_22, "PGOOD", PinPullResistance.OFF);
-        
-        statusThread = new Thread(new RateLimitedRunnable(1000L) {
+        System.out.println("Setup status monitor");
+        final StatusOutputStream statusLog = new StatusOutputStream(log.create("status.log"));
+
+        statusThread = new Thread(new RateLimitedRunnable(5000L) {
             @Override
             public void loop() throws InterruptedException {
                 try {
-                    sensors.system.setRawTemperature(Pi.getRawCpuTemperature());
-                    sensors.system.setIsPowerGood(pgood.isHigh());
+                    int rawCpuTemperature = Pi.getRawCpuTemperature();
+                    sensors.system.setRawTemperature(rawCpuTemperature);
+                    statusLog.writeValue(rawCpuTemperature);
                 } catch (IOException e) {
                     System.err.println(e);
                 }
@@ -246,7 +245,7 @@ public class Application {
     }
     
     protected void setupRadio() throws IOException, IllegalStateException, InterruptedException {
-        System.out.println("Setup Radio [XTend 900].");
+        System.out.println("Setup Radio [XTend 900]");
 
         XTend900Config radioConfig = new XTend900Config()
                 .setInterfaceDataRate(XTend900Config.InterfaceDataRate.BAUD_9600)
@@ -272,12 +271,12 @@ public class Application {
             radio.addListener(new XTend900Listener() {
                 @Override
                 public void onRadioTurnedOff() {
-                    System.out.println("Watchdog disabled.");
+                    System.out.println("Watchdog disabled");
                     watchdog.disable();
                 }
                 @Override
                 public void onRadioTurnedOn() {
-                    System.out.println("Watchdog enabled.");
+                    System.out.println("Watchdog enabled");
                     watchdog.enable();
                 }
                 @Override
@@ -322,7 +321,7 @@ public class Application {
     }
 
     private void setupWatchdog() {
-        System.out.println("Setup watchdog for XTend 900.");
+        System.out.println("Setup watchdog for XTend 900");
 
         watchdog = new Watchdog(30);
         watchdog.setListener(new WatchdogListener() {
@@ -340,7 +339,7 @@ public class Application {
     }
 
     protected void setupServer(int port) throws IOException {
-        System.out.println("Setup server.");
+        System.out.println("Setup server");
         server.setDebug(config.debug);
         server.start(port);
     }
@@ -359,9 +358,11 @@ public class Application {
                 System.out.println("w: watchdog status");
                 System.out.println("W: watchdog start");
             }
-            System.out.println("s: system status");
-            System.out.println("c: analog");
-            System.out.println("p: gps");
+            if (statusThread != null) {
+                System.out.println("s: system status");
+            }
+            System.out.println("a: analog");
+            System.out.println("g: gps");
             System.out.println("r: radio");
             if (radio != null) {
                 System.out.println("d: toggle radio power (currently " + (radio.isOn() ? "ON" : "OFF") + ")");
@@ -372,7 +373,7 @@ public class Application {
             break;
         case 'w':
             if (watchdog == null) {
-                System.out.println("Watchdog disabled.");
+                System.out.println("Watchdog disabled");
             } else {
                 System.out.println("Watchdog: time until timeout=" + watchdog.getTimeoutTimeRemaining() + " s, countdown=" + watchdog.getCountdownTimeRemaining() + " s");
             }
@@ -384,15 +385,17 @@ public class Application {
             }
             break;
         case 's':
-            System.out.println("CPU: " + sensors.system.getTemperatureC() + " C, " + sensors.system.getTemperatureF() + " F, Power " + (sensors.system.getIsPowerGood() ? "GOOD" : "BAD"));
+            if (statusThread != null) {
+                System.out.println("CPU: " + sensors.system.getTemperatureC() + " °C, " + sensors.system.getTemperatureF() + " °F");
+            }
             break;
         case 'f':
             System.out.println(manager.toString());
             break;
-        case 'c':
+        case 'a':
             System.out.println(sensors.analog);
             break;
-        case 'p':
+        case 'g':
             int localFix = sensors.gps.getFixStatus();
             String lf;
             switch (localFix) {
@@ -433,8 +436,8 @@ public class Application {
                         System.err.println(e);
                     }
                 }
-                System.out.println("Radio power is now " + (radio.isOn() ? "ON" : "OFF") + ".");
-                System.out.println("Radio transmission is now " + (transmitter != null && !transmitter.isPaused() ? "ON" : "OFF") + ".");
+                System.out.println("Radio power is now " + (radio.isOn() ? "ON" : "OFF"));
+                System.out.println("Radio transmission is now " + (transmitter != null && !transmitter.isPaused() ? "ON" : "OFF"));
             }
             break;
         case 't':
@@ -444,7 +447,7 @@ public class Application {
                 } else {
                     transmitter.pause();
                 }
-                System.out.println("Radio sensor transmission is now " + (transmitter.isPaused() ? "OFF" : "ON") + ".");
+                System.out.println("Radio sensor transmission is now " + (transmitter.isPaused() ? "OFF" : "ON"));
             }
             break;
         case 'q':
@@ -454,18 +457,18 @@ public class Application {
     }
 
     private void shutdown() {
-        System.out.println("Shutting down.");
+        System.out.println("Shutting down");
         
         if (watchdog != null) {
-            System.out.println("Stopping watchdog.");
+            System.out.println("Stopping watchdog");
             watchdog.stop();
         }
         
-        System.out.println("Stopping server.");
+        System.out.println("Stopping server");
         server.stop();
         
         if (statusThread != null) {
-            System.out.println("Stopping status monitor.");
+            System.out.println("Stopping status monitor");
             statusThread.interrupt();
             try {
                 statusThread.join();
@@ -474,11 +477,11 @@ public class Application {
             }
         }
         
-        System.out.println("Stopping device manager.");
+        System.out.println("Stopping device manager");
         manager.clear();
 
         if (log != null) {
-            System.out.println("Closing log streams.");
+            System.out.println("Closing log streams");
             log.close();
         }
 

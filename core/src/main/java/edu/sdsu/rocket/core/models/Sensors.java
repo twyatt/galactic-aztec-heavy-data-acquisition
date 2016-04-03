@@ -10,17 +10,17 @@ public class Sensors {
 	public final Radio radio = new Radio(); // -dBm
 	public final Status system = new Status(); // C
 	
-	public static final int ANALOG_MASK        = 0b0000_0001;
-	public static final int GPS_MASK           = 0b0010_0000;
-	public static final int RADIO_MASK         = 0b0100_0000;
-	public static final int SYSTEM_MASK        = 0b1000_0000;
-	public static final int ALL_MASK           = 0b1111_1111;
+	public static final byte ANALOG_MASK = (byte) 0b0000_0001;
+	public static final byte GPS_MASK    = (byte) 0b0010_0000;
+	public static final byte RADIO_MASK  = (byte) 0b0100_0000;
+	public static final byte SYSTEM_MASK = (byte) 0b1000_0000;
+	public static final byte ALL_MASK    = (byte) 0b1111_1111;
 	
 	public void toByteBuffer(ByteBuffer buffer) {
 		toByteBuffer(buffer, ALL_MASK);
 	}
 	
-	public void toByteBuffer(ByteBuffer buffer, int mask) {
+	public void toByteBuffer(ByteBuffer buffer, byte mask) {
 		if (mask == 0) mask = ALL_MASK;
 		
 		if ((mask & ANALOG_MASK) != 0) {
@@ -46,7 +46,6 @@ public class Sensors {
 		
 		if ((mask & SYSTEM_MASK) != 0) {
 			buffer.putInt(system.getRawTemperature());
-			buffer.put(system.getIsPowerGood() ? (byte) 0x1 : (byte) 0x0);
 		}
 	}
 	
@@ -54,7 +53,7 @@ public class Sensors {
 		fromByteBuffer(buffer, ALL_MASK);
 	}
 	
-	public void fromByteBuffer(ByteBuffer buffer, int mask) {
+	public void fromByteBuffer(ByteBuffer buffer, byte mask) {
 		if (mask == 0) mask = ALL_MASK;
 		
 		if ((mask & ANALOG_MASK) != 0) {
@@ -80,7 +79,6 @@ public class Sensors {
 		
 		if ((mask & SYSTEM_MASK) != 0) {
 			system.setRawTemperature(buffer.getInt());
-			system.setIsPowerGood(buffer.get() != 0);
 		}
 	}
 
