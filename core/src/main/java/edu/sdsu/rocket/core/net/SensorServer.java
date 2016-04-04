@@ -37,17 +37,27 @@ public class SensorServer {
             @Override
             public void onMessageReceived(DatagramMessage message) {
                 try {
+                    if (debug) {
+                        System.out.println("Received message ID: " + ByteHelper.byteToHexString(message.id));
+                    }
+
                     switch (message.id) {
                     case DatagramMessage.PING:
-                        if (debug) System.out.println("Received ping request");
+                        if (debug) {
+                            System.out.println("Received ping request");
+                        }
                         sendPingResponse(message);
                         break;
                     case DatagramMessage.SENSORS:
-                        if (debug) System.out.println("Received sensors request: " + ByteHelper.byteToHexString(message.id));
+                        if (debug) {
+                            System.out.println("Received sensors request");
+                        }
                         sendSensorResponse(message);
                         break;
                     default:
-                        if (debug) System.out.println("Unknown request: " + ByteHelper.byteToHexString(message.id));
+                        if (debug) {
+                            System.out.println("Unknown request");
+                        }
                         break;
                     }
                 } catch (IOException e) {
@@ -57,7 +67,7 @@ public class SensorServer {
         });
         server.start(port);
     }
-    
+
     public void stop() {
         if (server != null) {
             server.stop();
@@ -82,7 +92,7 @@ public class SensorServer {
         
         socket.send(packet);
     }
-    
+
     protected void sendSensorResponse(DatagramMessage message) throws IOException {
         if (server == null) return;
         

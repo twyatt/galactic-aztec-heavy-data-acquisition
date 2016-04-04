@@ -9,30 +9,30 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SensorClient {
 
-    private static final byte SENSORS_MASK = Sensors.ANALOG_MASK | Sensors.SYSTEM_MASK;
+    private static final byte SENSORS_MASK = Sensors.ANALOG_MASK;
 
     public interface SensorClientListener {
-        void onSensorsUpdated();
+        void onSensorsUpdated(byte mask);
         void onPingResponse(long latency);
     }
     
     private static final int BUFFER_SIZE = 1024; // bytes
     private final ByteBuffer MESSAGE_BUFFER = ByteBuffer.allocate(BUFFER_SIZE);
     private final ByteBuffer PING_BUFFER = ByteBuffer.allocate(BUFFER_SIZE);
-    
+
     private DatagramClient client;
     
     private Thread thread;
     private float frequency;
     private RateLimitedRunnable runnable;
-    
-    private int requestNumber; // message request number
+
+    private final AtomicInteger requestNumber = new AtomicInteger(); // message request number
     private int responseNumber; // message response number
-    private long latency; // round-trip time in nanoseconds
-    
+
     private SensorClientListener listener;
     
     private final Sensors sensors;
@@ -49,10 +49,10 @@ public class SensorClient {
         this.frequency = frequency;
         if (runnable != null) {
             if (frequency == 0) {
-                runnable.pause();
+                pause();
             } else {
                 runnable.setFrequency(frequency);
-                runnable.resume();
+                resume();
             }
         }
     }
@@ -127,11 +127,15 @@ public class SensorClient {
     
     public void sendPingRequest() throws IOException {
         PING_BUFFER.clear();
-        PING_BUFFER.putInt(++requestNumber);
+        PING_BUFFER.putInt(requestNumber.incrementAndGet()); // ++requestNumber
         PING_BUFFER.put(DatagramMessage.PING);
         PING_BUFFER.putLong(System.nanoTime());
         
         client.send(PING_BUFFER.array(), PING_BUFFER.position());
+    }
+
+    public void sendStatusRequest() throws IOException {
+        sendSensorRequest(Sensors.SYSTEM_MASK); // status request is simply a masked sensor request
     }
     
     public void sendSensorRequest(byte mask) throws IOException {
@@ -146,9 +150,9 @@ public class SensorClient {
         sendMessage(id, new byte[] { data });
     }
     
-    public void sendMessage(byte id, byte[] data) throws IOException {
+    synchronized public void sendMessage(byte id, byte[] data) throws IOException {
         MESSAGE_BUFFER.clear();
-        MESSAGE_BUFFER.putInt(++requestNumber);
+        MESSAGE_BUFFER.putInt(requestNumber.incrementAndGet()); // ++requestNumber
         MESSAGE_BUFFER.put(id);
         if (data != null) {
             MESSAGE_BUFFER.put(data);
@@ -160,7 +164,7 @@ public class SensorClient {
     protected void onPingResponse(DatagramMessage message) {
         try {
             ByteBuffer buf = ByteBuffer.wrap(message.data);
-            latency = System.nanoTime() - buf.getLong();
+            long latency = System.nanoTime() - buf.getLong(); // round-trip time in nanoseconds
             if (listener != null) {
                 listener.onPingResponse(latency);
             }
@@ -171,7 +175,7 @@ public class SensorClient {
     
     protected void onSensorData(DatagramMessage message) {
         if (message.number != 0) {
-            if (message.number < responseNumber || message.number > requestNumber) {
+            if (message.number < responseNumber || message.number > requestNumber.get()) {
                 return; // drop packet
             } else {
                 responseNumber = message.number;
@@ -183,7 +187,7 @@ public class SensorClient {
             byte mask = buffer.get();
             sensors.fromByteBuffer(buffer, mask);
             if (listener != null) {
-                listener.onSensorsUpdated();
+                listener.onSensorsUpdated(mask);
             }
         } catch (BufferUnderflowException e) {
             System.err.println(e);

@@ -27,6 +27,9 @@ public class MainController {
 
     private static final long NANOSECONDS_PER_MILLISECOND = 1000000L;
 
+    public static final long PING_INTERVAL = 1000L;
+    public static final long STATUS_INTERVAL = 5000L;
+
     public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
 
@@ -40,6 +43,7 @@ public class MainController {
     private final Sensors sensors = new Sensors();
     private final SensorClient client = new SensorClient(sensors);
     private Thread pingThread;
+    private Thread statusThread;
 
     @FXML private TextField hostTextField;
     @FXML private Button connectButton;
@@ -67,8 +71,8 @@ public class MainController {
             }
             
             @Override
-            public void onSensorsUpdated() {
-                Platform.runLater(() -> updateSensors());
+            public void onSensorsUpdated(byte mask) {
+                Platform.runLater(() -> updateSensors(mask));
             }
         });
     }
@@ -227,10 +231,18 @@ public class MainController {
         latencyLabel.setText(LATENCY_FORMAT.format(latency));
     }
     
-    private void updateSensors() {
-        updateSignalStrength();
-        updateGauges();
-        updateTemperature();
+    private void updateSensors(byte mask) {
+        if ((mask & Sensors.RADIO_MASK) != 0) {
+            updateSignalStrength();
+        }
+
+        if ((mask & Sensors.ANALOG_MASK) != 0) {
+            updateGauges();
+        }
+
+        if ((mask & Sensors.SYSTEM_MASK) != 0) {
+            updateTemperature();
+        }
     }
 
     private void updateTemperature() {
@@ -293,23 +305,8 @@ public class MainController {
                 client.setFrequency((float) frequencySlider.getValue());
                 client.start(addr, PORT);
 
-                pingThread = new Thread(() -> {
-                    while (!Thread.currentThread().isInterrupted()) {
-                        try {
-                            Thread.sleep(1000L);
-                        } catch (InterruptedException e) {
-                            System.err.println(e);
-                            return;
-                        }
-
-                        try {
-                            client.sendPingRequest();
-                        } catch (IOException e) {
-                            System.err.println(e);
-                        }
-                    }
-                });
-                pingThread.start();
+                startPingThread();
+                startStatusThread();
 
                 connectButton.setText(DISCONNECT);
             } catch (IOException e) {
@@ -322,13 +319,8 @@ public class MainController {
                 alert.showAndWait();
             }
         } else {
-            pingThread.interrupt();
-            try {
-                pingThread.join();
-            } catch (InterruptedException e) {
-                System.err.println(e);
-            }
-            pingThread = null;
+            stopPingThread();
+            stopStatusThread();
 
             client.stop();
 
@@ -338,6 +330,76 @@ public class MainController {
         }
         
         event.consume();
+    }
+
+    private void startStatusThread() {
+        stopStatusThread();
+
+        statusThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(STATUS_INTERVAL);
+                } catch (InterruptedException e) {
+                    System.err.println(e);
+                    return;
+                }
+
+                try {
+                    client.sendStatusRequest();
+                } catch (IOException e) {
+                    System.err.println(e);
+                }
+            }
+        });
+        statusThread.setName("Status Request");
+        statusThread.start();
+    }
+
+    private void stopStatusThread() {
+        if (statusThread != null) {
+            statusThread.interrupt();
+            try {
+                statusThread.join();
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
+            statusThread = null;
+        }
+    }
+
+    private void startPingThread() {
+        stopPingThread();
+
+        pingThread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try {
+                    Thread.sleep(PING_INTERVAL);
+                } catch (InterruptedException e) {
+                    System.err.println(e);
+                    return;
+                }
+
+                try {
+                    client.sendPingRequest();
+                } catch (IOException e) {
+                    System.err.println(e);
+                }
+            }
+        });
+        pingThread.setName("Ping Request");
+        pingThread.start();
+    }
+
+    private void stopPingThread() {
+        if (pingThread != null) {
+            pingThread.interrupt();
+            try {
+                pingThread.join();
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
+            pingThread = null;
+        }
     }
 
     private void saveSettings() {

@@ -32,6 +32,7 @@ import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 import java.io.*;
+import java.util.Random;
 
 public class Application {
     
@@ -228,7 +229,7 @@ public class Application {
     }
     
     private void setupStatusMonitor() throws FileNotFoundException {
-        if (config.test || config.disableSystemStatus) {
+        if (config.disableSystemStatus) {
             return;
         }
         System.out.println("Setup status monitor");
@@ -238,7 +239,9 @@ public class Application {
             @Override
             public void loop() throws InterruptedException {
                 try {
-                    int rawCpuTemperature = Pi.getRawCpuTemperature();
+                    final int rawCpuTemperature = config.test
+                            ? new Random().nextInt(100 * 1000)
+                            : Pi.getRawCpuTemperature();
                     sensors.system.setRawTemperature(rawCpuTemperature);
                     statusLog.writeValue(rawCpuTemperature);
                 } catch (IOException e) {
