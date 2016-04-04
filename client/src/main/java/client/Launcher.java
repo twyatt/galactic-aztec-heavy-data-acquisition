@@ -1,6 +1,7 @@
 package client;
 
 import client.main.MainController;
+import edu.sdsu.rocket.core.BuildConfig;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -28,7 +29,7 @@ public class Launcher extends Application {
         stage.setMinHeight(480);
 		stage.setWidth(1024);
 		stage.setHeight(768);
-		stage.setTitle(NAME);
+		stage.setTitle(NAME + " " + BuildConfig.VERSION);
 		stage.setScene(scene);
 		stage.show();
 		

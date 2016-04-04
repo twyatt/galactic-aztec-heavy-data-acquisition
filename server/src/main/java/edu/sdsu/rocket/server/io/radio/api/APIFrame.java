@@ -27,7 +27,7 @@ public class APIFrame {
 	
 	public APIFrame(byte startDelimiter, byte[] frameData, byte checksum) {
 		if (frameData.length > MAXIMUM_FRAME_DATA_LENGTH) {
-			throw new IllegalArgumentException("Frame data length " + frameData.length + " exceed maximum data length of " + MAXIMUM_FRAME_DATA_LENGTH + ".");
+			throw new IllegalArgumentException("Frame data length " + frameData.length + " exceed maximum data length of " + MAXIMUM_FRAME_DATA_LENGTH);
 		}
 		this.startDelimiter = startDelimiter;
 		this.frameData = frameData;

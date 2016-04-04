@@ -63,7 +63,7 @@ public class SensorClient {
     
     public void start(InetSocketAddress address) throws SocketException {
         if (client != null) {
-            throw new SocketException("Client already started.");
+            throw new SocketException("Client already started");
         }
         
         client = new DatagramClient(address);

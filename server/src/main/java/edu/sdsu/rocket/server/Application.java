@@ -39,7 +39,7 @@ public class Application {
 
     private final Config config;
     private Logger log;
-    private final DeviceManager manager = new DeviceManager();
+    private final DeviceManager manager;
     private final Reader input = new InputStreamReader(System.in);
     
     private final Sensors sensors = new Sensors();
@@ -52,6 +52,7 @@ public class Application {
     
     public Application(Config config) {
         this.config = config;
+        this.manager = new DeviceManager(config.debug);
     }
     
     public void setup() throws IOException, InterruptedException {
@@ -106,7 +107,9 @@ public class Application {
                     .setSingleEnded(ADS1115.Channel.A0)
                     .writeConfig();
             ads1114log[i].writeConfig(ads1114[i].getConfig());
-            System.out.println(ads1114[i]);
+            if (config.debug) {
+                System.out.println(ads1114[i]);
+            }
 
             final int index = i;
             DeviceRunnable deviceRunnable = manager.add(new DeviceManager.Device() {
@@ -143,7 +146,9 @@ public class Application {
                     .setMode(ADS1100.Mode.CONTINUOUS)
                     .writeConfig();
             ads1100log[i].writeConfig(ads1100[i].getConfig(), ads1100[i].getSupplyVoltage());
-            System.out.println(ads1100[i]);
+            if (config.debug) {
+                System.out.println(ads1100[i]);
+            }
 
             final int index = i;
             manager.add(new DeviceManager.Device() {

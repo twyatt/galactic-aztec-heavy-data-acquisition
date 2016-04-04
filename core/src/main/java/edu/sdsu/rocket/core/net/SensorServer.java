@@ -29,7 +29,7 @@ public class SensorServer {
     
     public void start(int port) throws SocketException {
         if (server != null) {
-            throw new SocketException("Server already started.");
+            throw new SocketException("Server already started");
         }
         
         server = new DatagramServer();
@@ -39,7 +39,7 @@ public class SensorServer {
                 try {
                     switch (message.id) {
                     case DatagramMessage.PING:
-                        if (debug) System.out.println("Received ping request.");
+                        if (debug) System.out.println("Received ping request");
                         sendPingResponse(message);
                         break;
                     case DatagramMessage.SENSORS:

@@ -1,7 +1,39 @@
 apply plugin: 'java'
 
+/**
+ * A BuildConfig plugin for Gradle java projects.
+ *
+ * https://github.com/mfuerstenau/gradle-buildconfig-plugin
+ */
+apply plugin: 'de.fuerstenau.buildconfig'
+
+buildscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.de.fuerstenau:BuildConfigPlugin:1.1.0'
+    }
+}
+
 dependencies {
     testCompile 'junit:junit:4.12'
+}
+
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+buildConfig {
+    packageName = 'edu.sdsu.rocket.core'
+    version = getVersionName()
 }
 
 test.testLogging.events 'skipped', 'passed', 'failed'

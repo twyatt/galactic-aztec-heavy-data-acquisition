@@ -42,7 +42,7 @@ public abstract class RateLimitedRunnable implements Runnable {
 	 */
 	public void setFrequency(float frequency) {
 		if (frequency == 0f) {
-			throw new IllegalArgumentException("Frequency cannot be zero.");
+			throw new IllegalArgumentException("Frequency cannot be zero");
 		}
 
         if (frequency > 60f) {

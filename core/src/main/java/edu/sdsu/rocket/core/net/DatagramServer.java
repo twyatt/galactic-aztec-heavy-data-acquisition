@@ -26,10 +26,10 @@ public class DatagramServer {
 	
 	public void start(int port) throws SocketException {
 		if (socket != null) {
-			throw new SocketException("Server already started.");
+			throw new SocketException("Server already started");
 		}
 		socket = new DatagramSocket(port);
-		System.out.println("Listing on port " + port + ".");
+		System.out.println("Listening on port " + port);
 		
 		runnable = new DatagramPacketRunnable(socket);
 		runnable.setListener(listener);

@@ -9,6 +9,7 @@ import java.util.List;
 public class Config {
 
     public boolean help;
+    public boolean version;
     public boolean test;
     public boolean debug;
     public boolean disableSystemStatus;
@@ -20,6 +21,8 @@ public class Config {
             if (arg.startsWith("--")) {
                 if (arg.equalsIgnoreCase("--help")) {
                     help = true;
+                } else if (arg.equalsIgnoreCase("--version")) {
+                    version = true;
                 } else if (arg.equalsIgnoreCase("--test")) {
                     test = true;
                 } else if (arg.equalsIgnoreCase("--debug")) {
@@ -39,6 +42,7 @@ public class Config {
     public String toString() {
         return super.toString() + ": "
                 + "help=" + help
+                + ", version=" + version
                 + ", test=" + test
                 + ", debug=" + debug
                 + ", disable-system-status=" + disableSystemStatus

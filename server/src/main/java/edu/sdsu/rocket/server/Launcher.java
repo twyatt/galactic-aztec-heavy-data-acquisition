@@ -1,5 +1,7 @@
 package edu.sdsu.rocket.server;
 
+import edu.sdsu.rocket.core.BuildConfig;
+
 import java.io.IOException;
 
 public class Launcher {
@@ -9,6 +11,11 @@ public class Launcher {
 
         if (config.help || args.length == 0) {
             printUsage();
+            System.exit(0);
+        }
+
+        if (config.version) {
+            System.out.println(BuildConfig.VERSION);
             System.exit(0);
         }
 
@@ -24,12 +31,14 @@ public class Launcher {
             }
         }
 
-        System.out.println("Starting application.");
+        System.out.println("Starting application (" + BuildConfig.VERSION + ")");
         start(config);
     }
 
     private static void start(Config config) throws IOException, InterruptedException {
-        System.out.println(config);
+        if (config.debug) {
+            System.out.println(config);
+        }
 
         final Application app = new Application(config);
         app.setup();
@@ -41,6 +50,7 @@ public class Launcher {
     private static void printUsage() {
         System.out.println("usage: server [OPTIONS] <LOG DIRECTORY> [<LOG DIRECTORY> ...]");
         System.out.println();
+        System.out.println("  --version                 Display version and quit");
         System.out.println("  --test                    Enable testing mode");
         System.out.println("  --debug                   Enable debug mode");
         System.out.println("  --disable-system-status   Disable reading of system status (e.g. CPU temperature)");

@@ -1,16 +1,16 @@
 package edu.sdsu.rocket.server.io.radio;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import edu.sdsu.rocket.core.helpers.ByteHelper;
 import edu.sdsu.rocket.server.io.radio.api.APIFrame;
 import edu.sdsu.rocket.server.io.radio.api.RFModuleStatus;
 import edu.sdsu.rocket.server.io.radio.api.RXPacket;
 import edu.sdsu.rocket.server.io.radio.api.TXStatus;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class APIFrameHandler {
 	
@@ -88,7 +88,7 @@ public class APIFrameHandler {
 				if (APIFrame.verify(d, checksum)) {
 					process(d);
 				} else {
-					System.err.println("API frame checksum failed: " + ByteHelper.byteToHexString(checksum) + " (received) vs. " + ByteHelper.byteToHexString(APIFrame.checksum(d)) + " (calculated).");
+					System.err.println("API frame checksum failed: " + ByteHelper.byteToHexString(checksum) + " (received) vs. " + ByteHelper.byteToHexString(APIFrame.checksum(d)) + " (calculated)");
 				}
 				reset();
 				break;

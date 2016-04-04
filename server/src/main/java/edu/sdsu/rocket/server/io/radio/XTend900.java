@@ -1,5 +1,12 @@
 package edu.sdsu.rocket.server.io.radio;
 
+import com.pi4j.io.gpio.*;
+import com.pi4j.io.serial.Serial;
+import com.pi4j.io.serial.SerialDataEvent;
+import com.pi4j.io.serial.SerialDataEventListener;
+import edu.sdsu.rocket.server.io.radio.api.APIFrame;
+import edu.sdsu.rocket.server.io.radio.api.TXRequest;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -7,18 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.RaspiPin;
-import com.pi4j.io.serial.Serial;
-import com.pi4j.io.serial.SerialDataEvent;
-import com.pi4j.io.serial.SerialDataEventListener;
-
-import edu.sdsu.rocket.server.io.radio.api.APIFrame;
-import edu.sdsu.rocket.server.io.radio.api.TXRequest;
 
 public class XTend900 implements SerialDataEventListener {
 	
@@ -245,7 +240,7 @@ public class XTend900 implements SerialDataEventListener {
 	
 	synchronized public void send(byte[] data) throws IllegalStateException, IOException {
 		if (!isOn()) {
-			throw new IllegalStateException(getClass().getSimpleName() + " must be on to send.");
+			throw new IllegalStateException(getClass().getSimpleName() + " must be on to send");
 		}
 		if (isCommandMode) {
 			return;
@@ -256,7 +251,7 @@ public class XTend900 implements SerialDataEventListener {
 			write(new TXRequest(TXRequest.FRAME_ID_DISABLE, TXRequest.BROADCAST_ADDRESS, TXRequest.OPTIONS_DISABLE_ACK, data));
 			break;
 		case ENABLED_WITH_ESCAPED_CHARACTERS:
-			throw new UnsupportedOperationException("API frame with escaped characters not implemented.");
+			throw new UnsupportedOperationException("API frame with escaped characters not implemented");
 		default: // DISABLED
 			write(data);
 			break;
@@ -311,7 +306,7 @@ public class XTend900 implements SerialDataEventListener {
 				apiFrameHandler.onData(data);
 				break;
 			case ENABLED_WITH_ESCAPED_CHARACTERS:
-				throw new UnsupportedOperationException("API frame with escaped characters not implemented.");
+				throw new UnsupportedOperationException("API frame with escaped characters not implemented");
 			default: // DISABLED
 				Collection<XTend900Listener> listenersCopy = new ArrayList<XTend900Listener>(listeners);
 		        for (XTend900Listener listener : listenersCopy) {
