@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 public class Sensors {
 	
 	public final Analog analog = new Analog(6); // mV
-	public final Pressures pressures = new Pressures(analog); // PSI
 	public final GPS gps = new GPS(); // degrees, m
 	public final Radio radio = new Radio(); // -dBm
 	public final Status system = new Status(); // C

@@ -3,27 +3,19 @@ package edu.sdsu.rocket.core.helpers;
 public class PressureValueTranslatorFactory {
 
     public static ValueTranslator getLOX() {
-        // P51-500-A-A-I36-5V-000-000
-        // calibrated transducer #2 on Nov 11, 2014
-        return new ValueTranslator(0.20688f, -143.273f);
+        return genericMSP304_01KP();
     }
 
     public static ValueTranslator getKerosene() {
-        // P51-500-A-A-I36-5V-000-000
-        // calibrated transducer #3 on Nov 11, 2014
-        return new ValueTranslator(0.212968f, -147.109f);
+        return genericMSP304_01KP();
     }
 
     public static ValueTranslator getHelium() {
-        // MSP-300-2K5-P-4-N-1
-        // calibrated transducer #4 on Nov 13, 2014
-        return new ValueTranslator(1.060797f, -653.691f);
+        return genericMSP304_05KP();
     }
 
     public static ValueTranslator getMotor() {
-        // P51-500-A-A-I36-5V-000-000
-        // calibrated transducer #1 on Nov 13, 2014
-        return new ValueTranslator(0.210439f, -150.502f);
+        return genericMSP304_01KP();
     }
 
     public static ValueTranslator lerp(float from, float to) {
@@ -31,11 +23,19 @@ public class PressureValueTranslatorFactory {
     }
 
     public static ValueTranslator getRcsLow() {
-        return lerp(5000f, 700f);
+        return genericMSP304_01KP();
     }
 
     public static ValueTranslator getRcsHigh() {
-        return lerp(5000f, 3000f);
+        return genericMSP304_05KP();
+    }
+
+    private static ValueTranslator genericMSP304_01KP() {
+        return new ValueTranslator(1f/4f, -250f);
+    }
+
+    private static ValueTranslator genericMSP304_05KP() {
+        return new ValueTranslator(5f/4f, -1250f);
     }
 
 }

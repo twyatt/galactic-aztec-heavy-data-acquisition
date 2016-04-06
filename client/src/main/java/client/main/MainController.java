@@ -117,83 +117,59 @@ public class MainController {
                 }});
 
         gaugeControllers = new GaugeController[] {
-                new GaugeController("LOX")
+                new GaugeController("A0: LOX")
                         .setTranslator(PressureValueTranslatorFactory.getLOX())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(750)
+                                .setMaxValue(1000)
                                 .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(600, 700, WARNING_COLOR));
-                                        add(new Section(700, 750, DANGER_COLOR));
-                                }})),
+                                .setMajorTickSpace(100)),
 
-                new GaugeController("Kerosene")
+                new GaugeController("A1: Kerosene")
                         .setTranslator(PressureValueTranslatorFactory.getKerosene())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(750)
+                                .setMaxValue(1000)
                                 .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, WARNING_COLOR));
-                                        add(new Section(3600, 5000, DANGER_COLOR));
-                                }})),
+                                .setMajorTickSpace(100)),
 
-                new GaugeController("Helium")
+                new GaugeController("A2: Helium")
                         .setTranslator(PressureValueTranslatorFactory.getHelium())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(2500)
-                                .setMinorTickSpace(20)
-                                .setMajorTickSpace(200)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, WARNING_COLOR));
-                                        add(new Section(3600, 5000, DANGER_COLOR));
-                                }})),
+                                .setMaxValue(5000)
+                                .setMinorTickSpace(50)
+                                .setMajorTickSpace(500)),
 
-                new GaugeController("Motor")
+                new GaugeController("A3: Motor")
                         .setTranslator(PressureValueTranslatorFactory.getMotor())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(500)
+                                .setMaxValue(1000)
                                 .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, Color.YELLOW));
-                                        add(new Section(3600, 5000, DANGER_COLOR));
-                                }})),
+                                .setMajorTickSpace(100)),
 
-                new GaugeController("RCS Low")
+                new GaugeController("A4: RCS Low")
                         .setTranslator(PressureValueTranslatorFactory.getRcsLow())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(800)
+                                .setMaxValue(1000)
                                 .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, WARNING_COLOR));
-                                        add(new Section(3600, 5000, DANGER_COLOR));
-                                }})),
+                                .setMajorTickSpace(100)),
 
-                new GaugeController("RCS High")
+                new GaugeController("A5: RCS High")
                         .setTranslator(PressureValueTranslatorFactory.getRcsHigh())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
                         .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
                                 .setUnit("PSI")
-                                .setMaxValue(4000)
+                                .setMaxValue(5000)
                                 .setMinorTickSpace(50)
-                                .setMajorTickSpace(500)
-                                .setSections(new ArrayList<Section>() {{
-                                        add(new Section(3300, 3600, WARNING_COLOR));
-                                        add(new Section(3600, 5000, DANGER_COLOR));
-                                }})),
+                                .setMajorTickSpace(500)),
         };
 
         for (int i = 0; i < gaugeControllers.length; i++) {
