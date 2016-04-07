@@ -2,7 +2,9 @@ package edu.sdsu.rocket.server;
 
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
+import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
 import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
+import edu.sdsu.rocket.core.helpers.Stopwatch;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS1100OutputStream;
@@ -32,11 +34,15 @@ import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class Application {
     
     private static final long NANOSECONDS_PER_SECOND = 1000000000L;
+
+    private final Stopwatch STOPWATCH = new Stopwatch();
 
     private final Config config;
     private Logger log;
@@ -116,9 +122,12 @@ public class Application {
             DeviceRunnable deviceRunnable = manager.add(new DeviceManager.Device() {
                 @Override
                 public void loop() throws IOException, InterruptedException {
+                    long timestamp = STOPWATCH.nanoSecondsElapsed();
+                    int timestampMillis = (int) TimeUnit.NANOSECONDS.toMillis(timestamp);
                     float value = ads1114[index].readMillivolts();
-                    sensors.analog.set(index, value);
-                    ads1114log[index].writeValue(value);
+
+                    sensors.analog[index].set(timestampMillis, value);
+                    ads1114log[index].writeValue(timestamp, value);
                 }
             });
             if (config.test) {
@@ -155,9 +164,12 @@ public class Application {
             manager.add(new DeviceManager.Device() {
                 @Override
                 public void loop() throws IOException, InterruptedException {
-                    float value = ads1100[index].readVoltage();
-                    sensors.analog.set(j, value * 1000f);
-                    ads1100log[index].writeValue(value);
+                    long timestamp = STOPWATCH.nanoSecondsElapsed();
+                    int timestampMillis = (int) TimeUnit.NANOSECONDS.toMillis(timestamp);
+                    float mV = ads1100[index].readVoltage() * 1000;
+
+                    sensors.analog[j].set(timestampMillis, mV);
+                    ads1100log[index].writeValue(timestamp, mV);
                 }
             }).setFrequency(ads1100[i].getRate().getSamplesPerSecond() * 2);
         }
@@ -239,11 +251,13 @@ public class Application {
             @Override
             public void loop() throws InterruptedException {
                 try {
+                    long timestamp = STOPWATCH.nanoSecondsElapsed();
                     final int rawCpuTemperature = config.test
                             ? new Random().nextInt(100 * 1000)
                             : Pi.getRawCpuTemperature();
+
                     sensors.system.setRawTemperature(rawCpuTemperature);
-                    statusLog.writeValue(rawCpuTemperature);
+                    statusLog.writeValue(timestamp, rawCpuTemperature);
                 } catch (IOException e) {
                     System.err.println(e);
                 }
@@ -362,6 +376,7 @@ public class Application {
             System.out.println();
             System.out.println("?: help");
             System.out.println("f: loop frequency");
+            System.out.println("e: runtime");
             if (watchdog != null) {
                 System.out.println("w: watchdog status");
                 System.out.println("W: watchdog start");
@@ -378,6 +393,12 @@ public class Application {
             }
             System.out.println("q: quit");
             System.out.println();
+            break;
+        case 'f':
+            System.out.println(manager.toString());
+            break;
+        case 'e':
+            System.out.println("Runtime: " + nanosToDHMS(STOPWATCH.nanoSecondsElapsed()));
             break;
         case 'w':
             if (watchdog == null) {
@@ -397,11 +418,13 @@ public class Application {
                 System.out.println("CPU: " + sensors.system.getTemperatureC() + " °C, " + sensors.system.getTemperatureF() + " °F");
             }
             break;
-        case 'f':
-            System.out.println(manager.toString());
-            break;
         case 'a':
-            System.out.println(sensors.analog);
+            String a[] = new String[sensors.analog.length];
+            for (int i = 0; i < sensors.analog.length; i++) {
+                long raw = sensors.analog[i].get();
+                a[i] = "A" + i + "=" + AtomicIntFloat.getFloatValue(raw);
+            }
+            System.out.println(Arrays.toString(a));
             break;
         case 'g':
             int localFix = sensors.gps.getFixStatus();
@@ -462,6 +485,14 @@ public class Application {
             shutdown();
             break;
         }
+    }
+
+    private static String nanosToDHMS(long nanoseconds) {
+        long days = TimeUnit.NANOSECONDS.toDays(nanoseconds);
+        long hours = TimeUnit.NANOSECONDS.toHours(nanoseconds) - TimeUnit.DAYS.toHours(days);
+        long minutes = TimeUnit.NANOSECONDS.toMinutes(nanoseconds) - TimeUnit.HOURS.toMinutes(TimeUnit.NANOSECONDS.toHours(nanoseconds));
+        long seconds = TimeUnit.NANOSECONDS.toSeconds(nanoseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.NANOSECONDS.toMinutes(nanoseconds));
+        return String.format("%dd%02d:%02d:%02d", days, hours, minutes, seconds);
     }
 
     private void shutdown() {

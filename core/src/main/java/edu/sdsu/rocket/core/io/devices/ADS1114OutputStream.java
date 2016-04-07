@@ -1,11 +1,10 @@
 package edu.sdsu.rocket.core.io.devices;
 
-import edu.sdsu.rocket.core.io.TimestampOutputStream;
-
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ADS1114OutputStream extends TimestampOutputStream {
+public class ADS1114OutputStream extends DataOutputStream {
 
     public ADS1114OutputStream(OutputStream out) {
         super(out);
@@ -15,10 +14,9 @@ public class ADS1114OutputStream extends TimestampOutputStream {
         writeInt(config);
     }
 
-    public long writeValue(float value) throws IOException {
-        long timestamp = writeTimestamp();
+    public void writeValue(long timestamp, float value) throws IOException {
+        writeLong(timestamp);
         writeFloat(value);
-        return timestamp;
     }
 
 }

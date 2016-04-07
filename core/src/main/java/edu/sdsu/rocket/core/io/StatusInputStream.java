@@ -1,9 +1,10 @@
 package edu.sdsu.rocket.core.io;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class StatusInputStream extends TimestampInputStream {
+public class StatusInputStream extends DataInputStream {
 
     public class Reading {
         public long timestamp;
@@ -21,7 +22,7 @@ public class StatusInputStream extends TimestampInputStream {
     }
 
     public void readValue(Reading out) throws IOException {
-        out.timestamp = readTimestamp();
+        out.timestamp = readLong();
         out.value = readInt();
     }
 

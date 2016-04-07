@@ -12,21 +12,17 @@ public class StatusStreamsTest {
 
     @Test
     public void ioTest() throws IOException {
-        int[] values = new int[]{
-                1123,
-                0,
-                -455,
-                2836
-        };
-        long[] timestamps = new long[values.length];
+        long[] timestamps = new long[] {   0L, 13L, 1333L, 129383L };
+        int[] values      = new int[]  { 1123,   0,  -455,    2836 };
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         StatusOutputStream out = new StatusOutputStream(baos);
 
         // write values
         for (int i = 0; i < values.length; i++) {
+            long timestamp = timestamps[i];
             int value = values[i];
-            timestamps[i] = out.writeValue(value);
+            out.writeValue(timestamp, value);
         }
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());

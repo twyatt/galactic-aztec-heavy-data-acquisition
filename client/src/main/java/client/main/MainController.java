@@ -1,6 +1,7 @@
 package client.main;
 
 import client.Launcher;
+import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
 import edu.sdsu.rocket.core.helpers.PressureValueTranslatorFactory;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorClient;
@@ -246,12 +247,13 @@ public class MainController {
     }
 
     private void updateGauges() {
-        for (int i = 0; i < gaugeControllers.length; i++) {
-            if (i >= sensors.analog.count) {
-                break;
-            }
+        int length = Math.min(gaugeControllers.length, sensors.analog.length);
+        for (int i = 0; i < length; i++) {
             GaugeController gaugeController = gaugeControllers[i];
-            gaugeController.setValue(sensors.analog.get(i));
+
+            long raw = sensors.analog[i].get();
+            float value = AtomicIntFloat.getFloatValue(raw);
+            gaugeController.setValue(value);
         }
     }
 

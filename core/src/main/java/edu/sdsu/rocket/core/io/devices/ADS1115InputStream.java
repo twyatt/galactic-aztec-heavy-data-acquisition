@@ -22,7 +22,7 @@ public class ADS1115InputStream extends ADS1114InputStream {
     }
 
     public void readValue(Reading out) throws IOException {
-        out.timestamp = readTimestamp();
+        out.timestamp = readLong();
         out.channel = readByte();
         out.value = readFloat();
     }

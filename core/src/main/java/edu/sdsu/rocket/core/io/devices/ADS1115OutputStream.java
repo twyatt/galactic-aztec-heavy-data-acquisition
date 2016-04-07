@@ -9,11 +9,10 @@ public class ADS1115OutputStream extends ADS1114OutputStream {
         super(out);
     }
 
-    public long writeValue(int channel, float value) throws IOException {
-        long timestamp = writeTimestamp();
+    public void writeValue(long timestamp, int channel, float value) throws IOException {
+        writeLong(timestamp);
         writeByte(channel);
         writeFloat(value);
-        return timestamp;
     }
 
 }

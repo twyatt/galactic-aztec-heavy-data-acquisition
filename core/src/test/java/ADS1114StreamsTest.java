@@ -1,3 +1,4 @@
+import edu.sdsu.rocket.core.helpers.Stopwatch;
 import edu.sdsu.rocket.core.io.devices.ADS1114InputStream;
 import edu.sdsu.rocket.core.io.devices.ADS1114OutputStream;
 import org.junit.Test;
@@ -14,13 +15,8 @@ public class ADS1114StreamsTest {
 
     @Test
     public void ioTest() throws IOException {
-        float[] values = new float[]{
-                0.123456789f,
-                1.234567890f,
-                1000f,
-                10000.123456789f
-        };
-        long[] timestamps = new long[values.length];
+        long[] timestamps = new long[]  {         102L,       10238L, 227633L,        83478238L };
+        float[] values    = new float[] { 0.123456789f, 1.234567890f,   1000f, 10000.123456789f };
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ADS1114OutputStream out = new ADS1114OutputStream(baos);
@@ -31,8 +27,9 @@ public class ADS1114StreamsTest {
 
         // write values
         for (int i = 0; i < values.length; i++) {
+            long timestamp = timestamps[i];
             float value = values[i];
-            timestamps[i] = out.writeValue(value);
+            out.writeValue(timestamp, value);
         }
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
