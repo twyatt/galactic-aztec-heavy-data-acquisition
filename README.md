@@ -15,9 +15,9 @@ Designed for the [SDSU Rocket Project] to be used on the [Galactic Aztec Heavy] 
 
 Browse the [latest release] page to determine the latest version, then SSH into your Raspberry Pi and run a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/0.7.1/server.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.0/server.tar | tar xv
 ```
-_Where `0.7.1` should be replaced with the latest version number appearing on the [latest release] page._
+_Where `1.0.0` should be replaced with the latest version number appearing on the [latest release] page._
 
 The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server:
 ```
