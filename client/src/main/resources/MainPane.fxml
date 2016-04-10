@@ -36,6 +36,10 @@
 
                 <Separator orientation="VERTICAL" />
 
+                <Button fx:id="recordButton" mnemonicParsing="false" onAction="#onRecord" text="Record" />
+
+                <Separator orientation="VERTICAL" />
+
                 <Label text="Latency" />
                 <Label fx:id="latencyLabel" text="?" />
                 <Label text="ms" />
@@ -46,11 +50,13 @@
                 <Label fx:id="temperatureLabel" text="?" />
                 <Label text="°F" />
 
+                <!--
                 <Separator orientation="VERTICAL" visible="false" />
 
                 <Label text="Signal" visible="false" />
                 <Label fx:id="signalLabel" text="?" visible="false" />
                 <Label text="dBm" visible="false" />
+                -->
             </items>
         </ToolBar>
     </top>

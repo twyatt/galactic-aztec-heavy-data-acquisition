@@ -1,5 +1,5 @@
-import edu.sdsu.rocket.core.io.devices.ADS1100InputStream;
-import edu.sdsu.rocket.core.io.devices.ADS1100OutputStream;
+import edu.sdsu.rocket.core.io.devices.ADS11xxInputStream;
+import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -8,7 +8,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 
-public class ADS1100StreamsTest {
+public class ADS11xxStreamsTest {
 
     private static final float DELTA = 0.00001f;
 
@@ -18,12 +18,12 @@ public class ADS1100StreamsTest {
         float[] values    = new float[] { 0.123456789f, 1.234567890f,        1000f, 10000.123456789f };
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ADS1100OutputStream out = new ADS1100OutputStream(baos);
+        ADS11xxOutputStream out = new ADS11xxOutputStream(baos);
 
         // write config
-        int configDefault = 0b1000_1100;
-        float Vdd = 3.3f;
-        out.writeConfig(configDefault, Vdd);
+//        int writeConfig = 0b1000_1100; // ADS1100 default
+        int writeConfig = 0b1000_0101_1000_0011; // ADS1114 default
+        out.writeConfig(writeConfig);
 
         // write values
         for (int i = 0; i < values.length; i++) {
@@ -33,18 +33,17 @@ public class ADS1100StreamsTest {
         }
 
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-        ADS1100InputStream in = new ADS1100InputStream(bais);
+        ADS11xxInputStream in = new ADS11xxInputStream(bais);
 
         // read config
-        ADS1100InputStream.Config config = in.readConfig();
-        assertEquals(configDefault, config.config);
-        assertEquals(Vdd, config.Vdd, DELTA);
+        int readConfig = in.readConfig();
+        assertEquals(writeConfig, readConfig);
 
         // read values
         for (int i = 0; i < values.length; i++) {
             long timestamp = timestamps[i];
             float value = values[i];
-            ADS1100InputStream.Reading reading = in.readValue();
+            ADS11xxInputStream.Reading reading = in.readValue();
             assertEquals(timestamp, reading.timestamp);
             assertEquals(value, reading.value, DELTA);
         }

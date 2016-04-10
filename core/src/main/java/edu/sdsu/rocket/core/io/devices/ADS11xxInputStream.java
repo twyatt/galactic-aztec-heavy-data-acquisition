@@ -4,31 +4,19 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ADS1100InputStream extends DataInputStream {
-
-    public class Config {
-        public int config;
-        public float Vdd;
-    }
+public class ADS11xxInputStream extends DataInputStream {
 
     public class Reading {
         public long timestamp;
         public float value;
     }
 
-    public ADS1100InputStream(InputStream in) {
+    public ADS11xxInputStream(InputStream in) {
         super(in);
     }
 
-    public Config readConfig() throws IOException {
-        Config config = new Config();
-        readConfig(config);
-        return config;
-    }
-
-    private void readConfig(Config out) throws IOException {
-        out.config = readInt();
-        out.Vdd = readFloat();
+    public int readConfig() throws IOException {
+        return readInt();
     }
 
     public Reading readValue() throws IOException {

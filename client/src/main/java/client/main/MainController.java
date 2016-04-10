@@ -2,7 +2,9 @@ package client.main;
 
 import client.Launcher;
 import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
+import edu.sdsu.rocket.core.helpers.Logger;
 import edu.sdsu.rocket.core.helpers.PressureValueTranslatorFactory;
+import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorClient;
 import eu.hansolo.enzo.common.Section;
@@ -15,21 +17,28 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.text.DecimalFormat;
 import java.text.Format;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 public class MainController {
 
     private static final long NANOSECONDS_PER_MILLISECOND = 1000000L;
 
-    public static final long PING_INTERVAL = 1000L;
-    public static final long STATUS_INTERVAL = 5000L;
+    public static final long PING_INTERVAL = 1000L; // ms
+    public static final long STATUS_INTERVAL = 5000L; // ms
 
     public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
@@ -39,6 +48,8 @@ public class MainController {
 
     private static final String CONNECT    = "Connect";
     private static final String DISCONNECT = "Disconnect";
+    private static final String RECORD     = "Record";
+    private static final String STOP       = "Stop";
 
     private static final int PORT = 4444;
     private final Sensors sensors = new Sensors();
@@ -46,8 +57,14 @@ public class MainController {
     private Thread pingThread;
     private Thread statusThread;
 
+    private volatile boolean isRecording;
+    private Logger logger;
+    private ADS11xxOutputStream[] log;
+
+    private Stage stage;
     @FXML private TextField hostTextField;
     @FXML private Button connectButton;
+    @FXML private Button recordButton;
     @FXML private Slider frequencySlider;
     @FXML private Label frequencyLabel;
     @FXML private Label latencyLabel;
@@ -61,7 +78,7 @@ public class MainController {
 
     /**
      * Constructor for the controller.
-     * 
+     *
      * Called prior to the initialize() method.
      */
     public MainController() {
@@ -70,19 +87,19 @@ public class MainController {
             public void onPingResponse(final long latency) {
                 Platform.runLater(() -> updateLatency((float) latency / NANOSECONDS_PER_MILLISECOND));
             }
-            
+
             @Override
             public void onSensorsUpdated(byte mask) {
                 Platform.runLater(() -> updateSensors(mask));
             }
         });
     }
-    
+
     /**
      * Initialize the controller.
-     * 
+     *
      * Automatically called after the FXML view has been loaded.
-     * 
+     *
      * Configures the child Life Line controller/view.
      */
     @FXML
@@ -92,9 +109,13 @@ public class MainController {
             frequencyLabel.setText(String.valueOf(value));
             client.setFrequency(value);
         });
-        
+
         setupGauges();
         loadSettings();
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 
     private void setupGauges() {
@@ -207,14 +228,14 @@ public class MainController {
     private void updateLatency(float latency) {
         latencyLabel.setText(LATENCY_FORMAT.format(latency));
     }
-    
+
     private void updateSensors(byte mask) {
         if ((mask & Sensors.RADIO_MASK) != 0) {
             updateSignalStrength();
         }
 
         if ((mask & Sensors.ANALOG_MASK) != 0) {
-            updateGauges();
+            onAnalogSensorsUpdated();
         }
 
         if ((mask & Sensors.SYSTEM_MASK) != 0) {
@@ -246,14 +267,36 @@ public class MainController {
         }
     }
 
-    private void updateGauges() {
-        int length = Math.min(gaugeControllers.length, sensors.analog.length);
-        for (int i = 0; i < length; i++) {
-            GaugeController gaugeController = gaugeControllers[i];
-
+    private void onAnalogSensorsUpdated() {
+        for (int i = 0; i < sensors.analog.length; i++) {
             long raw = sensors.analog[i].get();
             float value = AtomicIntFloat.getFloatValue(raw);
-            gaugeController.setValue(value);
+
+            if (i < gaugeControllers.length) {
+                GaugeController gaugeController = gaugeControllers[i];
+                gaugeController.setValue(value);
+            }
+
+            if (isRecording) {
+                long timestamp = TimeUnit.MILLISECONDS.toNanos(AtomicIntFloat.getIntValue(raw));
+                writeSensor(i, timestamp, value);
+            }
+        }
+    }
+
+    private void writeSensor(int i, long timestamp, float value) {
+        try {
+            log[i].writeValue(timestamp, value);
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            stopRecording();
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(Launcher.NAME);
+            alert.setHeaderText("Recording failed.");
+            alert.setContentText(e.getMessage());
+            alert.show();
         }
     }
 
@@ -306,8 +349,73 @@ public class MainController {
             temperatureLabel.setText("?");
             connectButton.setText(CONNECT);
         }
-        
+
         event.consume();
+    }
+
+    @FXML
+    private void onRecord(ActionEvent event) {
+        if (RECORD.equals(recordButton.getText())) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    }
+
+    private void startRecording() {
+        final Preferences prefs = Preferences.userRoot().node(this.getClass().getName());
+
+        String logDir = prefs.get("logDir", null);
+        if (logDir == null) {
+            logDir = System.getProperty("user.home");
+        }
+
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setInitialDirectory(new File(logDir));
+        File selectedDirectory = directoryChooser.showDialog(stage);
+
+        if (selectedDirectory != null) {
+            String path = selectedDirectory.getAbsolutePath();
+
+            File dir = new File(path);
+            List<File> dirs = Collections.singletonList(dir);
+            logger = new Logger(dirs);
+            log = new ADS11xxOutputStream[sensors.analog.length];
+
+            try {
+                for (int i = 0; i < sensors.analog.length; i++) {
+                    log[i] = new ADS11xxOutputStream(logger.create("A" + i + ".log"));
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+
+                logger.close();
+
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle(Launcher.NAME);
+                alert.setHeaderText("Unable to start recording.");
+                alert.setContentText(e.getMessage());
+                alert.show();
+
+                return;
+            }
+
+            prefs.put("logDir", path);
+
+            recordButton.setText(STOP);
+            isRecording = true;
+        }
+    }
+
+    private void stopRecording() {
+        isRecording = false;
+
+        recordButton.setText(RECORD);
+
+        if (logger != null) {
+            logger.close();
+            logger = null;
+        }
     }
 
     private void startStatusThread() {

@@ -4,7 +4,8 @@ import java.io.File;
 
 public class Launcher {
 	
-	private static final String NAME = System.getProperty("program.name");
+//	private static final String NAME = System.getProperty("program.name");
+	private static final String NAME = "log2csv";
 
 	public static void main(String[] args) {
 		if (args.length == 0) {

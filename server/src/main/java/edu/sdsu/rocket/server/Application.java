@@ -3,12 +3,12 @@ package edu.sdsu.rocket.server;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
+import edu.sdsu.rocket.core.helpers.Logger;
 import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
 import edu.sdsu.rocket.core.helpers.Stopwatch;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
-import edu.sdsu.rocket.core.io.devices.ADS1100OutputStream;
-import edu.sdsu.rocket.core.io.devices.ADS1114OutputStream;
+import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorServer;
 import edu.sdsu.rocket.server.devices.ADS1100;
@@ -40,8 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 public class Application {
     
-    private static final long NANOSECONDS_PER_SECOND = 1000000000L;
-
     private final Stopwatch STOPWATCH = new Stopwatch();
 
     private final Config config;
@@ -98,13 +96,13 @@ public class Application {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SDA),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_SCL),
         };
-        final ADS1114OutputStream[] ads1114log = new ADS1114OutputStream[ads1114.length];
+        final ADS11xxOutputStream[] ads1114log = new ADS11xxOutputStream[ads1114.length];
 
         for (int i = 0; i < ads1114.length; i++) {
-            final String name = "ADS1114-A" + i;
+            final String name = "A" + i;
 
-            System.out.println("Setup ADC [" + name + "]");
-            ads1114log[i] = new ADS1114OutputStream(log.create(name + ".log"));
+            System.out.println("Setup ADC ADS1114 [" + name + "]");
+            ads1114log[i] = new ADS11xxOutputStream(log.create(name + ".log"));
 
             ads1114[i].setup()
                     .setGain(ADS1115.Gain.PGA_2_3)
@@ -141,21 +139,22 @@ public class Application {
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD4),
                 config.test ? new MockADS1100() : new ADS1100(ADS1100.Address.AD5),
         };
-        final ADS1100OutputStream[] ads1100log = new ADS1100OutputStream[ads1100.length];
+        final ADS11xxOutputStream[] ads1100log = new ADS11xxOutputStream[ads1100.length];
 
         for (int i = 0; i < ads1100.length; i++) {
             final int j = i + ads1114.length;
-            final String name = "ADS1100-A" + j;
+            final String name = "A" + j;
 
-            System.out.println("Setup ADC [" + name + "]");
-            ads1100log[i] = new ADS1100OutputStream(log.create(name + ".log"));
+            System.out.println("Setup ADC ADS1100 [" + name + "]");
+            ads1100log[i] = new ADS11xxOutputStream(log.create(name + ".log"));
 
             ads1100[i].setup()
                     .setGain(ADS1100.Gain.PGA_1)
                     .setRate(ADS1100.Rate.SPS_16)
                     .setMode(ADS1100.Mode.CONTINUOUS)
                     .writeConfig();
-            ads1100log[i].writeConfig(ads1100[i].getConfig(), ads1100[i].getSupplyVoltage());
+            ads1100log[i].writeConfig(ads1100[i].getConfig());
+            System.out.println("Supply Voltage: " + ads1100[i].getSupplyVoltage());
             if (config.debug) {
                 System.out.println(ads1100[i]);
             }

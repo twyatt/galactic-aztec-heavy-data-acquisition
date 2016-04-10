@@ -4,9 +4,9 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class ADS1114OutputStream extends DataOutputStream {
+public class ADS11xxOutputStream extends DataOutputStream {
 
-    public ADS1114OutputStream(OutputStream out) {
+    public ADS11xxOutputStream(OutputStream out) {
         super(out);
     }
 
