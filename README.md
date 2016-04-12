@@ -1,5 +1,5 @@
 # Galactic Aztec Heavy Data Acquisition Software
-[![Build Status](https://travis-ci.org/twyatt/galactic-aztec-heavy-data-acquisition.svg?branch=master)](https://travis-ci.org/twyatt/galactic-aztec-heavy-data-acquisition)
+[![Build Status](https://travis-ci.org/twyatt/galactic-aztec-heavy-data-acquisition.svg?branch=phidgets)](https://travis-ci.org/twyatt/galactic-aztec-heavy-data-acquisition)
 
 
 This project is a simplified fork of the original [Galactic Aztec Data Acquisition] project, designed to be used with the [Phidgets Bridge] board.
