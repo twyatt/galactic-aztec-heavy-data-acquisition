@@ -1,14 +1,18 @@
 package edu.sdsu.rocket.server;
 
+import com.phidgets.BridgePhidget;
+import com.phidgets.PhidgetException;
+import com.phidgets.event.BridgeDataEvent;
+import com.phidgets.event.BridgeDataListener;
+import com.phidgets.event.ErrorEvent;
+import com.phidgets.event.ErrorListener;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
-import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
-import edu.sdsu.rocket.core.helpers.Logger;
-import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
-import edu.sdsu.rocket.core.helpers.Stopwatch;
+import edu.sdsu.rocket.core.helpers.*;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
+import edu.sdsu.rocket.core.io.devices.PhidgetBridgeOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorServer;
 import edu.sdsu.rocket.server.devices.ADS1100;
@@ -54,13 +58,15 @@ public class Application {
     private DeviceRunnable transmitter;
     private Watchdog watchdog;
     private Thread statusThread;
-    
+
+    private BridgePhidget bridge;
+
     public Application(Config config) {
         this.config = config;
         this.manager = new DeviceManager(config.debug);
     }
     
-    public void setup() throws IOException, InterruptedException {
+    public void setup() throws IOException, InterruptedException, PhidgetException {
         setupLogging();
         setupDevices();
         setupStatusMonitor();
@@ -82,13 +88,78 @@ public class Application {
         System.out.println("Logging started at " + System.nanoTime());
     }
     
-    protected void setupDevices() throws IOException, InterruptedException {
-        setupADC();
+    protected void setupDevices() throws IOException, InterruptedException, PhidgetException {
+//        setupADC();
+        setupPhidgets();
 //        setupGPS();
 //        setupRadio();
 //        setupWatchdog();
     }
-    
+
+    private void setupPhidgets() throws IOException, PhidgetException {
+        final String name = "loadcell";
+        System.out.println("Setup Phidget Bridge [" + name + "]");
+        PhidgetBridgeOutputStream phidgetBridgeLog = new PhidgetBridgeOutputStream(log.create(name + ".log"));
+
+        bridge = new BridgePhidget();
+        bridge.openAny();
+        System.out.println("Waiting for the Phidget Bridge to be attached ...");
+        bridge.waitForAttachment();
+
+        bridge.addErrorListener(new ErrorListener() {
+            public void error(ErrorEvent e) {
+                System.err.println(e.getException());
+            }
+        });
+
+        System.out.println("Name: " + bridge.getDeviceName());
+        System.out.println("Serial #: " + bridge.getSerialNumber());
+        System.out.println("Version: " + bridge.getDeviceVersion());
+        System.out.println("# Bridges: " + bridge.getInputCount());
+
+        if (config.debug) {
+            System.out.println("Enabling bridge 0");
+        }
+        bridge.setEnabled(0, true);
+
+        if (config.debug) {
+            System.out.println("Setting bridge 0 to a gain of 128");
+        }
+        bridge.setGain(0, BridgePhidget.PHIDGET_BRIDGE_GAIN_128);
+
+        if (config.debug) {
+            System.out.println("Max data rate: " + bridge.getDataRateMax());
+        }
+        bridge.setDataRate(bridge.getDataRateMax());
+        System.out.println("Data rate: " + bridge.getDataRate());
+
+        phidgetBridgeLog.writeConfig(
+                bridge.getSerialNumber(),
+                bridge.getDeviceVersion(),
+                bridge.getInputCount(),
+                bridge.getGain(0),
+                bridge.getDataRate()
+        );
+
+        bridge.addBridgeDataListener(new BridgeDataListener() {
+            public void bridgeData(BridgeDataEvent event) {
+                long timestamp = STOPWATCH.nanoSecondsElapsed();
+                int timestampMillis = (int) TimeUnit.NANOSECONDS.toMillis(timestamp);
+                double value = event.getValue();
+
+                sensors.phidgets.set(timestampMillis, value);
+                try {
+                    phidgetBridgeLog.writeValue(timestamp, value);
+                } catch (IOException e) {
+                    System.err.println(e);
+                    if (config.debug) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+    }
+
     private void setupADC() throws IOException {
         final ADS1115[] ads1114 = new ADS1115[] {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_GND),
@@ -384,6 +455,7 @@ public class Application {
                 System.out.println("s: system status");
             }
             System.out.println("a: analog");
+            System.out.println("p: Phigdet bridge");
             System.out.println("g: gps");
             System.out.println("r: radio");
             if (radio != null) {
@@ -424,6 +496,9 @@ public class Application {
                 a[i] = "A" + i + "=" + AtomicIntFloat.getFloatValue(raw);
             }
             System.out.println(Arrays.toString(a));
+            break;
+        case 'p':
+            System.out.println("Bridge=" + sensors.phidgets.get().doubleValue + " mV/V");
             break;
         case 'g':
             int localFix = sensors.gps.getFixStatus();
@@ -517,6 +592,13 @@ public class Application {
         
         System.out.println("Stopping device manager");
         manager.clear();
+
+        System.out.println("Stopping Phidgets");
+        try {
+            bridge.close();
+        } catch (PhidgetException e) {
+            System.err.println(e);
+        }
 
         if (log != null) {
             System.out.println("Closing log streams");
