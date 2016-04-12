@@ -29,7 +29,7 @@ sudo make install
 
 Browse the [releases page] to determine the latest version, then SSH into your Raspberry Pi and run a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.0-phidgets/server.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.0-phidgets/server-phidgets.tar | tar xv
 ```
 _Where `1.0.0-phidgets` should be replaced with the latest version number appearing on the [releases page]._
 
