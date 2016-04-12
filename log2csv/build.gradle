@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
+distributions.main.baseName = 'log2csv-phidgets'
 mainClassName = 'edu.sdsu.rocket.log2csv.Launcher'
 
 dependencies {

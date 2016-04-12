@@ -7,6 +7,7 @@ repositories {
     }
 }
 
+distributions.main.baseName = 'server-phidgets'
 mainClassName = 'edu.sdsu.rocket.server.Launcher'
 
 dependencies {
