@@ -35,13 +35,13 @@ _Where `1.0.0-phidgets` should be replaced with the latest version number appear
 
 The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server:
 ```
-sudo server/bin/server logs/
+sudo server-phidgets/bin/server logs/
 ```
 _The server can be executed with the `--help` argument to see more options._
 
 Alternatively, if you wish to start the server without recording readings, then you can use the `--allow-no-logs` argument:
 ```
-sudo server/bin/server --allow-no-logs
+sudo server-phidgets/bin/server --allow-no-logs
 ```
 
 ### Usage
