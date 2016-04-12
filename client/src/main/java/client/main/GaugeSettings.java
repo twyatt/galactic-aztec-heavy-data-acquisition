@@ -9,8 +9,8 @@ public class GaugeSettings {
     String unit;
     double maxValue;
     List<Section> sections;
-    int minorTickSpace;
-    int majorTickSpace;
+    double minorTickSpace;
+    double majorTickSpace;
 
     public GaugeSettings setUnit(String unit) {
         this.unit = unit;
@@ -27,12 +27,12 @@ public class GaugeSettings {
         return this;
     }
 
-    public GaugeSettings setMinorTickSpace(int minorTickSpace) {
+    public GaugeSettings setMinorTickSpace(double minorTickSpace) {
         this.minorTickSpace = minorTickSpace;
         return this;
     }
 
-    public GaugeSettings setMajorTickSpace(int majorTickSpace) {
+    public GaugeSettings setMajorTickSpace(double majorTickSpace) {
         this.majorTickSpace = majorTickSpace;
         return this;
     }

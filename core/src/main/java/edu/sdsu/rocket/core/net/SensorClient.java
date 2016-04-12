@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SensorClient {
 
-    private static final byte SENSORS_MASK = Sensors.ANALOG_MASK;
+    private static final byte SENSORS_MASK = Sensors.PHIDGETS_MASK;
 
     public interface SensorClientListener {
         void onSensorsUpdated(byte mask);

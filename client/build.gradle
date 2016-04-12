@@ -23,9 +23,9 @@ buildscript {
 
 jfx {
     mainClass 'client.Launcher'
-    appName 'DataAcquisitionClient'
+    appName 'DataAcquisitionClientPhidgets'
     vendor 'SDSU Rocket Project'
-    jfxMainAppJarName 'data-acquisition-client.jar'
+    jfxMainAppJarName 'data-acquisition-client-phidgets.jar'
     nativeReleaseVersion null
 }
 

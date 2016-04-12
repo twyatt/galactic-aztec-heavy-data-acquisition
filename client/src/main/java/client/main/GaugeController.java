@@ -21,7 +21,7 @@ public class GaugeController {
     private final Map<Mode, GaugeSettings> settingsMap = new HashMap<>();
     private ValueTranslator translator;
     private final String label;
-    private float rawValue;
+    private double rawValue;
 
     // gauge
     private Gauge gauge;
@@ -82,15 +82,15 @@ public class GaugeController {
         return this;
     }
 
-    public void setValue(float value) {
+    public void setValue(double value) {
         this.rawValue = value;
         updateValue();
     }
 
     private void updateValue() {
         float value = mode == Mode.TRANSLATED && translator != null
-                ? translator.translate(rawValue)
-                : rawValue;
+                ? translator.translate((float) rawValue)
+                : (float) rawValue;
 
         if (gauge != null) {
             gauge.setValue(value);
@@ -174,8 +174,12 @@ public class GaugeController {
         NumberAxis yAxis = (NumberAxis) chart.getYAxis();
         yAxis.setLabel(settings.unit);
         yAxis.setUpperBound(settings.maxValue);
-        yAxis.setTickUnit(settings.majorTickSpace);
-        int majorTickCount = (int) (settings.maxValue / settings.majorTickSpace);
+        if (settings.majorTickSpace > settings.maxValue) {
+            yAxis.setTickUnit(settings.majorTickSpace / 10);
+        } else {
+            yAxis.setTickUnit(settings.majorTickSpace);
+        }
+        double majorTickCount = settings.maxValue / settings.majorTickSpace;
         int minorTickCount = (int) (settings.maxValue / majorTickCount / settings.minorTickSpace);
         yAxis.setMinorTickCount(minorTickCount);
     }

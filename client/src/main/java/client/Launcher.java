@@ -27,9 +27,9 @@ public class Launcher extends Application {
         Scene scene = new Scene(root);
         
         stage.setMinWidth(640);
-        stage.setMinHeight(480);
+        stage.setMinHeight(300);
         stage.setWidth(1024);
-        stage.setHeight(768);
+        stage.setHeight(600);
         stage.setTitle(NAME + " " + BuildConfig.VERSION);
         stage.setScene(scene);
         stage.show();

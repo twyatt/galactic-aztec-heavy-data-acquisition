@@ -1,10 +1,8 @@
 package client.main;
 
 import client.Launcher;
-import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
-import edu.sdsu.rocket.core.helpers.Logger;
-import edu.sdsu.rocket.core.helpers.PressureValueTranslatorFactory;
-import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
+import edu.sdsu.rocket.core.helpers.*;
+import edu.sdsu.rocket.core.io.devices.PhidgetBridgeOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.net.SensorClient;
 import eu.hansolo.enzo.common.Section;
@@ -43,7 +41,6 @@ public class MainController {
     public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
 
-    private static final int SENSOR_COLUMNS = 3;
     private GaugeController[] gaugeControllers;
 
     private static final String CONNECT    = "Connect";
@@ -59,7 +56,7 @@ public class MainController {
 
     private volatile boolean isRecording;
     private Logger logger;
-    private ADS11xxOutputStream[] log;
+    private PhidgetBridgeOutputStream log;
 
     private Stage stage;
     @FXML private TextField hostTextField;
@@ -70,8 +67,7 @@ public class MainController {
     @FXML private Label latencyLabel;
     @FXML private Label temperatureLabel;
     @FXML private Label signalLabel;
-    @FXML private GridPane gaugePane;
-    @FXML private GridPane chartPane;
+    @FXML private GridPane gridPane;
 
     private static final Format LATENCY_FORMAT = new DecimalFormat("#.#");
     private static final Format TEMPERATURE_FORMAT = new DecimalFormat("#.#");
@@ -119,94 +115,54 @@ public class MainController {
     }
 
     private void setupGauges() {
-        final GaugeSettings voltageSettingsADS1114 = new GaugeSettings()
-                .setUnit("mV")
-                .setMaxValue(5500)
-                .setMinorTickSpace(50)
-                .setMajorTickSpace(500)
+        final GaugeSettings settingsMillivoltsPerVolt = new GaugeSettings()
+                .setUnit("mV/V")
+                .setMaxValue(8)
+                .setMinorTickSpace(1)
+                .setMajorTickSpace(10)
                 .setSections(new ArrayList<Section>() {{
-                    add(new Section(5000, 5300, WARNING_COLOR));
-                    add(new Section(5300, 5500, DANGER_COLOR));
+                    add(new Section(7, 7.8125, WARNING_COLOR));
+                    add(new Section(7.8125, 8, DANGER_COLOR));
                 }});
-        final GaugeSettings voltageSettingsADS1100 = new GaugeSettings()
-                .setUnit("mV")
-                .setMaxValue(5500)
-                .setMinorTickSpace(50)
-                .setMajorTickSpace(500)
+
+        final ValueTranslator forceTranslator = new ValueTranslator(5000f / 3f, 0f);
+        final GaugeSettings settingsForce = new GaugeSettings()
+                .setUnit("lb")
+                .setMaxValue(8000)
+                .setMinorTickSpace(100)
+                .setMajorTickSpace(1000)
                 .setSections(new ArrayList<Section>() {{
-                    add(new Section(5000, 5200, WARNING_COLOR));
-                    add(new Section(5200, 5500, DANGER_COLOR));
+                    add(new Section(5000, 7500, WARNING_COLOR));
+                    add(new Section(7500, 8000, DANGER_COLOR));
                 }});
+
+        // for debugging (using 5kg load cell, 1.0946 mV/V)
+//        final ValueTranslator forceTranslator = new ValueTranslator(25000f / 5473f, 0f);
+//        final GaugeSettings settingsForce = new GaugeSettings()
+//                .setUnit("kg")
+//                .setMaxValue(8)
+//                .setMinorTickSpace(1)
+//                .setMajorTickSpace(10)
+//                .setSections(new ArrayList<Section>() {{
+//                    add(new Section(5, 7.5, WARNING_COLOR));
+//                    add(new Section(7.5, 8, DANGER_COLOR));
+//                }});
 
         gaugeControllers = new GaugeController[] {
-                new GaugeController("A0: LOX")
-                        .setTranslator(PressureValueTranslatorFactory.getLOX())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(1000)
-                                .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)),
-
-                new GaugeController("A1: Kerosene")
-                        .setTranslator(PressureValueTranslatorFactory.getKerosene())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(1000)
-                                .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)),
-
-                new GaugeController("A2: Helium")
-                        .setTranslator(PressureValueTranslatorFactory.getHelium())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(5000)
-                                .setMinorTickSpace(50)
-                                .setMajorTickSpace(500)),
-
-                new GaugeController("A3: Motor")
-                        .setTranslator(PressureValueTranslatorFactory.getMotor())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(1000)
-                                .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)),
-
-                new GaugeController("A4: RCS Low")
-                        .setTranslator(PressureValueTranslatorFactory.getRcsLow())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(1000)
-                                .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)),
-
-                new GaugeController("A5: RCS High")
-                        .setTranslator(PressureValueTranslatorFactory.getRcsHigh())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(5000)
-                                .setMinorTickSpace(50)
-                                .setMajorTickSpace(500)),
+                new GaugeController("Channel 0")
+                        .setTranslator(forceTranslator)
+                        .putSettings(GaugeController.Mode.RAW, settingsMillivoltsPerVolt)
+                        .putSettings(GaugeController.Mode.TRANSLATED, settingsForce),
         };
 
-        for (int i = 0; i < gaugeControllers.length; i++) {
-            GaugeController controller = gaugeControllers[i];
+        GaugeController controller = gaugeControllers[0];
 
-            int row = i / SENSOR_COLUMNS;
-            int col = i % SENSOR_COLUMNS;
-            Gauge gauge = makePressureGauge(controller.getLabel(), controller.getActiveSettings());
-            controller.setGauge(gauge);
+        LineChart<Number, Number> chart = (LineChart<Number, Number>) gridPane.getChildren().get(0);
+        controller.setChart(chart);
 
-            gaugePane.add(gauge, col, row);
-
-            LineChart<Number, Number> chart = (LineChart<Number, Number>) chartPane.getChildren().get(i);
-            controller.setChart(chart);
-        }
+        Gauge gauge = makePressureGauge(controller.getLabel(), controller.getActiveSettings());
+        controller.setGauge(gauge);
+        gridPane.add(gauge, 0, 0);
     }
 
     private Gauge makePressureGauge(String label, GaugeSettings settings) {
@@ -234,8 +190,8 @@ public class MainController {
             updateSignalStrength();
         }
 
-        if ((mask & Sensors.ANALOG_MASK) != 0) {
-            onAnalogSensorsUpdated();
+        if ((mask & Sensors.PHIDGETS_MASK) != 0) {
+            onPhidgetsSensorsUpdated();
         }
 
         if ((mask & Sensors.SYSTEM_MASK) != 0) {
@@ -267,10 +223,10 @@ public class MainController {
         }
     }
 
-    private void onAnalogSensorsUpdated() {
+    private void onPhidgetsSensorsUpdated() {
         for (int i = 0; i < sensors.analog.length; i++) {
-            long raw = sensors.analog[i].get();
-            float value = AtomicIntFloat.getFloatValue(raw);
+            AtomicIntDouble.IntDoubleValuePair pair = sensors.phidgets.get();
+            double value = pair.doubleValue;
 
             if (i < gaugeControllers.length) {
                 GaugeController gaugeController = gaugeControllers[i];
@@ -278,15 +234,15 @@ public class MainController {
             }
 
             if (isRecording) {
-                long timestamp = TimeUnit.MILLISECONDS.toNanos(AtomicIntFloat.getIntValue(raw));
-                writeSensor(i, timestamp, value);
+                long timestamp = TimeUnit.MILLISECONDS.toNanos(pair.intValue);
+                writeSensor(timestamp, value);
             }
         }
     }
 
-    private void writeSensor(int i, long timestamp, float value) {
+    private void writeSensor(long timestamp, double value) {
         try {
-            log[i].writeValue(timestamp, value);
+            log.writeValue(timestamp, value);
         } catch (IOException e) {
             e.printStackTrace();
 
@@ -301,13 +257,13 @@ public class MainController {
     }
 
     @FXML
-    private void onDisplayPSI(ActionEvent event) {
+    private void onDisplayLb(ActionEvent event) {
         setMode(GaugeController.Mode.TRANSLATED);
         event.consume();
     }
 
     @FXML
-    private void onDisplayMillivolts(ActionEvent event) {
+    private void onDisplayMillivoltsPerVolt(ActionEvent event) {
         setMode(GaugeController.Mode.RAW);
         event.consume();
     }
@@ -380,12 +336,9 @@ public class MainController {
             File dir = new File(path);
             List<File> dirs = Collections.singletonList(dir);
             logger = new Logger(dirs);
-            log = new ADS11xxOutputStream[sensors.analog.length];
 
             try {
-                for (int i = 0; i < sensors.analog.length; i++) {
-                    log[i] = new ADS11xxOutputStream(logger.create("A" + i + ".log"));
-                }
+                log = new PhidgetBridgeOutputStream(logger.create("loadcell.log"));
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
 
