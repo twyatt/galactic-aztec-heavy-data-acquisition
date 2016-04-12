@@ -1,11 +1,12 @@
 package edu.sdsu.rocket.log2csv;
 
 import au.com.bytecode.opencsv.CSVWriter;
-import edu.sdsu.rocket.core.helpers.ByteHelper;
-import edu.sdsu.rocket.core.io.devices.ADS11xxInputStream;
+import edu.sdsu.rocket.core.io.devices.PhidgetBridgeInputStream;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Converter {
 
@@ -16,19 +17,17 @@ public class Converter {
     }
     
     public void convert() {
-        for (int i = 0; i < 6; i++) {
-            String name = "A" + i;
-            System.out.print("Converting ADC (" + name + ") ... ");
-            try {
-                convertADS11xx(name);
-                System.out.println("Done");
-            } catch (IOException e) {
-                System.err.println(name + ": " + e);
-            }
+        String name = "loadcell";
+        System.out.print("Converting Phidgets Bridge (" + name + ") ... ");
+        try {
+            convertPhidgetsBridge(name);
+            System.out.println("Done");
+        } catch (IOException e) {
+            System.err.println(name + ": " + e);
         }
     }
 
-    private void convertADS11xx(String name) throws IOException {
+    private void convertPhidgetsBridge(String name) throws IOException {
         String logFilename = name + ".log";
         String csvFilename = name + ".csv";
         String logPath = location + File.separator + logFilename;
@@ -36,18 +35,21 @@ public class Converter {
 
         System.out.println(logPath + " => " + csvPath);
 
-        ADS11xxInputStream in = new ADS11xxInputStream(new FileInputStream(logPath));
+        PhidgetBridgeInputStream in = new PhidgetBridgeInputStream(new FileInputStream(logPath));
 
-        final int config = in.readConfig();
-        byte[] bytes = ByteBuffer.allocate(4).putInt(config).array();
-        System.out.println("Config: " + ByteHelper.bytesToHexString(bytes));
+        final PhidgetBridgeInputStream.Config config = in.readConfig();
+        System.out.println("config.serialNumber = " + config.serialNumber);
+        System.out.println("config.deviceVersion = " + config.deviceVersion);
+        System.out.println("config.inputCount = " + config.inputCount);
+        System.out.println("config.gain = " + config.gain);
+        System.out.println("config.dataRate = " + config.dataRate);
 
         FileWriter fileWriter = new FileWriter(csvPath);
         CSVWriter csv = new CSVWriter(fileWriter, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
 
         try {
-            csv.writeNext("Nanoseconds", "Millivolts");
-            ADS11xxInputStream.Reading reading;
+            csv.writeNext("Nanoseconds", "mV/V");
+            PhidgetBridgeInputStream.Reading reading;
             while ((reading = in.readValue()) != null) {
                 csv.writeNext(String.valueOf(reading.timestamp), String.valueOf(reading.value));
             }
