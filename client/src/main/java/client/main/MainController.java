@@ -48,7 +48,7 @@ public class MainController {
     private static final String RECORD     = "Record";
     private static final String STOP       = "Stop";
 
-    private static final int PORT = 4444;
+    private static final int PORT = 4445;
     private final Sensors sensors = new Sensors();
     private final SensorClient client = new SensorClient(sensors);
     private Thread pingThread;

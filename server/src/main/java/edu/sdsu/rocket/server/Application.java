@@ -70,7 +70,7 @@ public class Application {
         setupLogging();
         setupDevices();
         setupStatusMonitor();
-        setupServer(4444);
+        setupServer(4445);
     }
 
     protected void setupLogging() throws IOException {
