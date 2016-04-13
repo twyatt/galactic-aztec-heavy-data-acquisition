@@ -17,8 +17,7 @@ The server requires that the [Phidgets drivers] be installed, which can be done 
 ```
 sudo apt-get update
 sudo apt-get install libusb-1.0-0-dev
-wget http://www.phidgets.com/downloads/libraries/libphidget.tar.gz
-tar xvzf libphidget.tar.gz
+wget -qO- http://www.phidgets.com/downloads/libraries/libphidget.tar.gz | tar xv
 cd libphidget*
 ./configure
 make
