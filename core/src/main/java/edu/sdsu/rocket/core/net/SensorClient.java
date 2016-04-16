@@ -13,11 +13,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SensorClient {
 
-    private static final byte SENSORS_MASK = Sensors.ANALOG_MASK;
-
     public interface SensorClientListener {
         void onSensorsUpdated(byte mask);
         void onPingResponse(long latency);
+    }
+
+    public static class SensorClientListenerAdapter implements SensorClientListener {
+        @Override
+        public void onSensorsUpdated(byte mask) {}
+
+        @Override
+        public void onPingResponse(long latency) {}
     }
     
     private static final int BUFFER_SIZE = 1024; // bytes
@@ -36,9 +42,11 @@ public class SensorClient {
     private SensorClientListener listener;
     
     private final Sensors sensors;
+    private final byte mask;
 
-    public SensorClient(Sensors sensors) {
+    public SensorClient(Sensors sensors, byte mask) {
         this.sensors = sensors;
+        this.mask = mask;
     }
     
     public void setListener(SensorClientListener listener) {
@@ -86,7 +94,7 @@ public class SensorClient {
             @Override
             public void loop() throws InterruptedException {
                 try {
-                    sendSensorRequest(SENSORS_MASK);
+                    sendSensorRequest(mask);
                 } catch (IOException e) {
                     System.err.println(e);
                 }

@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'edu.sdsu.rocket.gateway.Launcher'
+
+dependencies {
+    compile project(':core')
+
+    compile 'org.nanohttpd:nanohttpd:2.2.0'
+}
