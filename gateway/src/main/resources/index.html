@@ -5,6 +5,8 @@
         <title>Data Acquisition</title>
         <style>
             body {
+                width: 400px;
+                height: 500px;
                 background-color: black;
                 color: white;
                 font-size: 14pt;
@@ -21,18 +23,24 @@
             var a1 = parseFloat(Math.round(data[1] * 100) / 100).toFixed(2);
             var a2 = parseFloat(Math.round(data[2] * 100) / 100).toFixed(2);
             var a3 = parseFloat(Math.round(data[3] * 100) / 100).toFixed(2);
+
             /*
             var a4 = parseFloat(Math.round(data[4] * 100) / 100).toFixed(2);
             var a5 = parseFloat(Math.round(data[5] * 100) / 100).toFixed(2);
             */
+
             $('#a0').text(a0);
             $('#a1').text(a1);
             $('#a2').text(a2);
             $('#a3').text(a3);
+
             /*
             $('#a4').text(a4);
             $('#a5').text(a5);
             */
+
+            var lc = parseFloat(Math.round(data[6] * 100) / 100).toFixed(2);
+            $('#lc').text(lc);
 
             var currentdate = new Date();
             var datetime = currentdate.getHours() + ":"
@@ -73,6 +81,13 @@
                     <div id="a3">?</div>
                 </td>
                 <td>PSI</td>
+            </tr>
+            <tr>
+                <td>Load Cell:</td>
+                <td>
+                    <div id="lc">?</div>
+                </td>
+                <td>lb</td>
             </tr>
         </table>
 

@@ -1,5 +1,6 @@
 package edu.sdsu.rocket.core.models;
 
+import edu.sdsu.rocket.core.helpers.AtomicIntDouble;
 import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
 
 import java.nio.ByteBuffer;
@@ -7,6 +8,7 @@ import java.nio.ByteBuffer;
 public class Sensors {
     
     public final AtomicIntFloat[] analog = new AtomicIntFloat[6]; // mV
+    public final AtomicIntDouble phidgets = new AtomicIntDouble();
     public final GPS gps = new GPS(); // degrees, m
     public final Radio radio = new Radio(); // -dBm
     public final Status system = new Status(); // C
@@ -15,6 +17,7 @@ public class Sensors {
     public static final byte SYSTEM_MASK = (byte) 0b0000_0010;
     public static final byte GPS_MASK    = (byte) 0b0000_0100;
     public static final byte RADIO_MASK  = (byte) 0b0000_1000;
+    public static final byte PHIDGETS_MASK = (byte) 0b0001_0000;
     public static final byte ALL_MASK    = (byte) 0b1111_1111;
 
     public Sensors() {
@@ -54,6 +57,12 @@ public class Sensors {
         if ((mask & SYSTEM_MASK) != 0) {
             buffer.putInt(system.getRawTemperature());
         }
+
+        if ((mask & PHIDGETS_MASK) != 0) {
+            AtomicIntDouble.IntDoubleValuePair pair = phidgets.get();
+            buffer.putInt(pair.intValue);
+            buffer.putDouble(pair.doubleValue);
+        }
     }
     
     public void fromByteBuffer(ByteBuffer buffer) {
@@ -86,6 +95,10 @@ public class Sensors {
         
         if ((mask & SYSTEM_MASK) != 0) {
             system.setRawTemperature(buffer.getInt());
+        }
+
+        if ((mask & PHIDGETS_MASK) != 0) {
+            phidgets.set(buffer.getInt(), buffer.getDouble());
         }
     }
 
