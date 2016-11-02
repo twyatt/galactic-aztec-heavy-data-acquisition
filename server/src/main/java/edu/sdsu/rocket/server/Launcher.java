@@ -1,5 +1,6 @@
 package edu.sdsu.rocket.server;
 
+import com.pi4j.io.i2c.I2CFactory;
 import edu.sdsu.rocket.core.BuildConfig;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class Launcher {
         start(config);
     }
 
-    private static void start(Config config) throws IOException, InterruptedException {
+    private static void start(Config config) throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         if (config.debug) {
             System.out.println(config);
         }

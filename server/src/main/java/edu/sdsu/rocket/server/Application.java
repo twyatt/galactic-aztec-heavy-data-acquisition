@@ -1,5 +1,6 @@
 package edu.sdsu.rocket.server;
 
+import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
@@ -60,7 +61,7 @@ public class Application {
         this.manager = new DeviceManager(config.debug);
     }
     
-    public void setup() throws IOException, InterruptedException {
+    public void setup() throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         setupLogging();
         setupDevices();
         setupStatusMonitor();
@@ -82,14 +83,14 @@ public class Application {
         System.out.println("Logging started at " + System.nanoTime());
     }
     
-    protected void setupDevices() throws IOException, InterruptedException {
+    protected void setupDevices() throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         setupADC();
 //        setupGPS();
 //        setupRadio();
 //        setupWatchdog();
     }
     
-    private void setupADC() throws IOException {
+    private void setupADC() throws IOException, I2CFactory.UnsupportedBusNumberException {
         final ADS1115[] ads1114 = new ADS1115[] {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_GND),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_VDD),

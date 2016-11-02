@@ -3,6 +3,7 @@
 *.war
 *.ear
 hs_err_pid*
+classes/
 
 ## IntelliJ
 .idea/

@@ -187,7 +187,7 @@ public class ADS1100 {
      * 
      * @throws IOException 
      */
-    public ADS1100 setup() throws IOException {
+    public ADS1100 setup() throws IOException, I2CFactory.UnsupportedBusNumberException {
         // http://pi4j.com/example/control.html
         i2c = I2CFactory.getInstance(i2cBus).getDevice(address.config);
         return this;
