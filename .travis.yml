@@ -11,6 +11,7 @@ before_install: |
     java -Xmx32m -version
     javac -J-Xmx32m -version
   fi
+install: true
 
 matrix:
   include:
