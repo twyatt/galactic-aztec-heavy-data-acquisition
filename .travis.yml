@@ -26,6 +26,9 @@ matrix:
         on:
           tags: true
     - os: linux
+      env:
+        global:
+          - TMPDIR=$TRAVIS_BUILD_DIR/tmp
       jdk: oraclejdk8
       addons:
         apt:
@@ -33,6 +36,9 @@ matrix:
             - oracle-java8-installer
             - fakeroot
             - rpm
+      before_script:
+        - echo "TMPDIR=$TMPDIR"
+        - mkdir -p $TMPDIR
       script: ./gradlew clean assemble :client:jfxNative --info
       before_deploy:
         - export LINUX_DEB=$(ls client/build/jfx/native/dataacquisitionclient-*.deb)
