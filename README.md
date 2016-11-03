@@ -15,9 +15,9 @@ Designed for the [SDSU Rocket Project] to be used on the [Galactic Aztec Heavy] 
 
 Browse the [latest release] page to determine the latest version, then SSH into your Raspberry Pi and run a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.0/server.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.1/server.tar | tar xv
 ```
-_Where `1.0.0` should be replaced with the latest version number appearing on the [latest release] page._
+_Where `1.0.1` should be replaced with the latest version number appearing on the [latest release] page._
 
 The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server:
 ```
@@ -49,11 +49,23 @@ server/bin/server --test
 
 ### OS X
 
-Simply download and install the OS X package (named `DataAcquisitionClient.dmg`) from the [latest release] page.
+Simply download and install the OS X package (named `DataAcquisitionClient-VERSION.dmg`) from the [latest release] page.
+_Where `VERSION` represents the latest version number appearing on the [latest release] page._
 
 ### Windows
 
 Locate and download the latest `DataAcquisitionClient.zip` file from the [releases page]. Extract and run `DataAcquisitionClient.exe`.
+
+### Linux
+
+Locate and download the latest `dataacquisitionclient-VERSION.deb` file from the [latest release].
+_Where `VERSION` represents the latest version number appearing on the [latest release] page._
+
+On Debian based systems, you can install the package by running:
+
+```
+sudo dpkg -i dataacquisitionclient-*.deb && sudo apt-get install -f
+```
 
 ### Building From Source
 
@@ -73,6 +85,29 @@ The built application will be saved into the `client/build/jfx/native/` sub-dire
 
 The built application will be saved into the `client/build/jfx/native/` sub-directory.
 
+#### Linux
+
+The Linux distribution can be built on a Linux machine or via Docker image.
+
+To build on a Linux machine you'll need:
+
+- JDK 8 (Oracle or OpenJDK w/ JavaFX)
+- fakeroot
+- rpmbuild
+
+On Debian based systems you can run:
+
+```
+sudo apt-get update && sudo apt-get install fakeroot rpm
+./gradlew :client:jfxNative
+```
+
+Alternatively, if you have [Docker] installed, then you can simply run:
+
+```
+docker/project-build.sh
+```
+
 
 [Galactic Aztec Data Acquisition]: https://github.com/twyatt/galactic-aztec-data-acquisition
 [Galactic Aztec Heavy Raspberry Pi Add-on: ADC]: https://github.com/twyatt/galactic-aztec-heavy-rpi-addon-adc
@@ -82,3 +117,4 @@ The built application will be saved into the `client/build/jfx/native/` sub-dire
 [releases page]: https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases
 [Java SE Development Kit 8]: http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
 [latest Source code (zip)]: https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/zipball/master
+[Docker]: https://www.docker.com
