@@ -29,6 +29,7 @@ matrix:
       env:
         global:
           - TMPDIR=$TRAVIS_BUILD_DIR/tmp
+          - _JAVA_OPTIONS=-Djava.io.tmpdir=$TRAVIS_BUILD_DIR/tmp
       jdk: oraclejdk8
       addons:
         apt:
