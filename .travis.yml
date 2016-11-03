@@ -33,7 +33,7 @@ matrix:
             - oracle-java8-installer
             - fakeroot
             - rpm
-      script: ./gradlew clean assemble :client:jfxNative
+      script: ./gradlew clean assemble :client:jfxNative --info
       before_deploy:
         - export LINUX_DEB=$(ls client/build/jfx/native/dataacquisitionclient-*.deb)
       deploy:
