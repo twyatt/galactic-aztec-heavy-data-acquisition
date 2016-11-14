@@ -41,6 +41,20 @@ If you don't have the [Galactic Aztec Heavy Raspberry Pi Add-on: ADC], or simila
 server/bin/server --test
 ```
 
+### Logging
+
+The server logs to a simple binary format that can be converted to CSV using `log2csv`, which can be installed by running a command similar to:
+```
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.1/log2csv.tar | tar xv
+```
+_Where `1.0.1` should be replaced with the latest version number appearing on the [latest release] page._
+
+You can then convert logs produced by the server by running `log2csv` with the log directory as the only argument, for example:
+```
+log2csv/bin/log2csv server/bin/logs/20161113233302
+```
+In this example, we are running `log2csv` and specifying a log directory that was created after running the server; be sure and replace `20161113233302` from the example with the appropriate directory created after running the server.
+
 
 ## Client
 
