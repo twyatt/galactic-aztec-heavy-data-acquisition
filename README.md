@@ -15,9 +15,9 @@ Designed for the [SDSU Rocket Project] to be used on the [Galactic Aztec Heavy] 
 
 Browse the [latest release] page to determine the latest version, then SSH into your Raspberry Pi and run a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.1/server.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.1.0/server.tar | tar xv
 ```
-_Where `1.0.1` should be replaced with the latest version number appearing on the [latest release] page._
+_Where `1.1.0` should be replaced with the latest version number appearing on the [latest release] page._
 
 The server is designed to record all readings to file; you can specify the directories to save the recordings to when you start the server:
 ```
@@ -45,15 +45,20 @@ server/bin/server --test
 
 The server logs to a simple binary format that can be converted to CSV using `log2csv`, which can be installed by running a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.0.1/log2csv.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.1.0/log2csv.tar | tar xv
 ```
-_Where `1.0.1` should be replaced with the latest version number appearing on the [latest release] page._
+_Where `1.1.0` should be replaced with the latest version number appearing on the [latest release] page._
 
 You can then convert logs produced by the server by running `log2csv` with the log directory as the only argument, for example:
 ```
 log2csv/bin/log2csv server/bin/logs/20161113233302
 ```
 In this example, we are running `log2csv` and specifying a log directory that was created after running the server; be sure and replace `20161113233302` from the example with the appropriate directory created after running the server.
+
+The client does not write sensor config data, so `log2csv` must be instructed to skip the config data when converting logs written by the client, for example:
+```
+log2csv/bin/log2csv --skip-config server/bin/logs/20161113233302
+```
 
 
 ## Client

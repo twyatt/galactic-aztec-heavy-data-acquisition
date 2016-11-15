@@ -10,9 +10,11 @@ import java.nio.ByteBuffer;
 public class Converter {
 
     private File location;
+    private final boolean skipConfig;
 
-    public Converter(File location) {
+    public Converter(File location, boolean skipConfig) {
         this.location = location;
+        this.skipConfig = skipConfig;
     }
     
     public void convert() {
@@ -20,7 +22,7 @@ public class Converter {
             String name = "A" + i;
             System.out.print("Converting ADC (" + name + ") ... ");
             try {
-                convertADS11xx(name);
+                convertADS11xx(name, skipConfig);
                 System.out.println("Done");
             } catch (IOException e) {
                 System.err.println(name + ": " + e);
@@ -28,7 +30,7 @@ public class Converter {
         }
     }
 
-    private void convertADS11xx(String name) throws IOException {
+    private void convertADS11xx(String name, boolean skipConfig) throws IOException {
         String logFilename = name + ".log";
         String csvFilename = name + ".csv";
         String logPath = location + File.separator + logFilename;
@@ -38,9 +40,13 @@ public class Converter {
 
         ADS11xxInputStream in = new ADS11xxInputStream(new FileInputStream(logPath));
 
-        final int config = in.readConfig();
-        byte[] bytes = ByteBuffer.allocate(4).putInt(config).array();
-        System.out.println("Config: " + ByteHelper.bytesToHexString(bytes));
+        if (skipConfig) {
+            System.out.println("Config: Skipped");
+        } else {
+            final int config = in.readConfig();
+            byte[] bytes = ByteBuffer.allocate(4).putInt(config).array();
+            System.out.println("Config: " + ByteHelper.bytesToHexString(bytes));
+        }
 
         FileWriter fileWriter = new FileWriter(csvPath);
         CSVWriter csv = new CSVWriter(fileWriter, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);
