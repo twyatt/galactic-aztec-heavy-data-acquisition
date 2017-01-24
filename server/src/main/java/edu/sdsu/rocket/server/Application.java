@@ -6,6 +6,7 @@ import com.phidgets.event.BridgeDataEvent;
 import com.phidgets.event.BridgeDataListener;
 import com.phidgets.event.ErrorEvent;
 import com.phidgets.event.ErrorListener;
+import com.pi4j.io.i2c.I2CFactory;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import edu.sdsu.rocket.core.helpers.*;
@@ -160,7 +161,7 @@ public class Application {
         });
     }
 
-    private void setupADC() throws IOException {
+    private void setupADC() throws IOException, I2CFactory.UnsupportedBusNumberException {
         final ADS1115[] ads1114 = new ADS1115[] {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_GND),
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_VDD),
