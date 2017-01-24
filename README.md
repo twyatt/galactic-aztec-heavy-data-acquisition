@@ -49,7 +49,7 @@ After the server has been started, you can issue commands to perform functions s
 
 ### Testing
 
-If you don't have the [Galactic Aztec Heavy Raspberry Pi Add-on: ADC], or similar board available, then you can start the server in testing mode (whereas it generates sinusoidal test data):
+If you don't have the [Phidgets Bridge], then you can start the server in testing mode (whereas it generates sinusoidal test data):
 ```
 server-phidgets/bin/server --test
 ```
@@ -58,7 +58,7 @@ server-phidgets/bin/server --test
 
 The server logs to a simple binary format that can be converted to CSV using `log2csv`, which can be installed by running a command similar to:
 ```
-wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.1.0/log2csv-phidgets.tar | tar xv
+wget -qO- https://github.com/twyatt/galactic-aztec-heavy-data-acquisition/releases/download/1.1.0-phidgets/log2csv-phidgets.tar | tar xv
 ```
 _Where `1.1.0` should be replaced with the latest version number appearing on the [latest release] page._
 
