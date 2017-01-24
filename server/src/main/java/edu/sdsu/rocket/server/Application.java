@@ -22,6 +22,7 @@ import edu.sdsu.rocket.server.devices.DeviceManager;
 import edu.sdsu.rocket.server.devices.DeviceManager.DeviceRunnable;
 import edu.sdsu.rocket.server.devices.mock.MockADS1100;
 import edu.sdsu.rocket.server.devices.mock.MockADS1115;
+import edu.sdsu.rocket.server.devices.mock.MockBridgePhidget;
 import edu.sdsu.rocket.server.io.radio.*;
 import edu.sdsu.rocket.server.io.radio.Watchdog.WatchdogListener;
 import edu.sdsu.rocket.server.io.radio.XTend900.XTend900Listener;
@@ -61,6 +62,7 @@ public class Application {
     private Thread statusThread;
 
     private BridgePhidget bridge;
+    private MockBridgePhidget mockBridge;
 
     public Application(Config config) {
         this.config = config;
@@ -102,6 +104,58 @@ public class Application {
         System.out.println("Setup Phidget Bridge [" + name + "]");
         PhidgetBridgeOutputStream phidgetBridgeLog = new PhidgetBridgeOutputStream(log.create(name + ".log"));
 
+        if (config.test) {
+            setupMockPhidgets(phidgetBridgeLog);
+        } else {
+            setupPhidgetsDevice(phidgetBridgeLog);
+        }
+
+        BridgeDataListener bridgeDataListener = new BridgeDataListener() {
+            public void bridgeData(BridgeDataEvent event) {
+                long timestamp = STOPWATCH.nanoSecondsElapsed();
+                int timestampMillis = (int) TimeUnit.NANOSECONDS.toMillis(timestamp);
+                double value = event.getValue();
+
+                sensors.phidgets.set(timestampMillis, value);
+                try {
+                    phidgetBridgeLog.writeValue(timestamp, value);
+                } catch (IOException e) {
+                    System.err.println(e);
+                    if (config.debug) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        if (config.test) {
+            mockBridge.addBridgeDataListener(bridgeDataListener);
+        } else {
+            bridge.addBridgeDataListener(bridgeDataListener);
+        }
+    }
+
+    private void setupMockPhidgets(PhidgetBridgeOutputStream phidgetBridgeLog) throws IOException {
+        mockBridge = new MockBridgePhidget();
+        System.out.println("Configuring mock Phidget Bridge");
+
+        int serialNumber = 0;
+        int deviceVersion = 0;
+        int inputCount = 1;
+        int gain = 0;
+        int dataRate = 0;
+        phidgetBridgeLog.writeConfig(
+                serialNumber,
+                deviceVersion,
+                inputCount,
+                gain,
+                dataRate
+        );
+
+        manager.add(mockBridge)
+                .setFrequency(60f);
+    }
+
+    private void setupPhidgetsDevice(PhidgetBridgeOutputStream phidgetBridgeLog) throws PhidgetException, IOException {
         bridge = new BridgePhidget();
         bridge.openAny();
         System.out.println("Waiting for the Phidget Bridge to be attached ...");
@@ -141,24 +195,6 @@ public class Application {
                 bridge.getGain(0),
                 bridge.getDataRate()
         );
-
-        bridge.addBridgeDataListener(new BridgeDataListener() {
-            public void bridgeData(BridgeDataEvent event) {
-                long timestamp = STOPWATCH.nanoSecondsElapsed();
-                int timestampMillis = (int) TimeUnit.NANOSECONDS.toMillis(timestamp);
-                double value = event.getValue();
-
-                sensors.phidgets.set(timestampMillis, value);
-                try {
-                    phidgetBridgeLog.writeValue(timestamp, value);
-                } catch (IOException e) {
-                    System.err.println(e);
-                    if (config.debug) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
     }
 
     private void setupADC() throws IOException, I2CFactory.UnsupportedBusNumberException {
