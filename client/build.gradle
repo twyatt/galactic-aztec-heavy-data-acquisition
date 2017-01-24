@@ -41,7 +41,7 @@ jfx {
     appName 'DataAcquisitionClientPhidgets'
     vendor 'SDSU Rocket Project'
     jfxMainAppJarName 'data-acquisition-client-phidgets.jar'
-    nativeReleaseVersion getVersionName()
+    nativeReleaseVersion getVersionName().replace("-phidgets", "")
     verbose true
 
     bundleArguments = [

@@ -38,8 +38,8 @@ matrix:
             - rpm
       script: ./gradlew clean assemble :client:jfxNative --info
       before_deploy:
-        - export LINUX_DEB=$(ls client/build/jfx/native/dataacquisitionclient-phidgets-*.deb)
-        - export LINUX_RPM=$(ls client/build/jfx/native/dataacquisitionclient-phidgets-*.rpm)
+        - export LINUX_DEB=$(ls client/build/jfx/native/dataacquisitionclientphidgets-*.deb)
+        - export LINUX_RPM=$(ls client/build/jfx/native/dataacquisitionclientphidgets-*.rpm)
       deploy:
         provider: releases
         api_key:
