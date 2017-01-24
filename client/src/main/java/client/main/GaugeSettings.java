@@ -7,6 +7,7 @@ import java.util.List;
 public class GaugeSettings {
 
     String unit;
+    double minValue;
     double maxValue;
     List<Section> sections;
     double minorTickSpace;
@@ -14,6 +15,11 @@ public class GaugeSettings {
 
     public GaugeSettings setUnit(String unit) {
         this.unit = unit;
+        return this;
+    }
+
+    public GaugeSettings setMinValue(double minValue) {
+        this.minValue = minValue;
         return this;
     }
 

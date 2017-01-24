@@ -148,6 +148,7 @@ public class GaugeController {
     private void updateGauge() {
         GaugeSettings settings = getActiveSettings();
 
+        gauge.setMinValue(settings.minValue);
         gauge.setMaxValue(settings.maxValue);
         updateValue();
         gauge.setMajorTickSpace(settings.majorTickSpace);
@@ -169,18 +170,20 @@ public class GaugeController {
 
     private void updateChart() {
         GaugeSettings settings = getActiveSettings();
+        double valueRange = settings.maxValue - settings.minValue;
 
         chart.setTitle(label);
         NumberAxis yAxis = (NumberAxis) chart.getYAxis();
         yAxis.setLabel(settings.unit);
+        yAxis.setLowerBound(settings.minValue);
         yAxis.setUpperBound(settings.maxValue);
-        if (settings.majorTickSpace > settings.maxValue) {
+        if (settings.majorTickSpace > valueRange) {
             yAxis.setTickUnit(settings.majorTickSpace / 10);
         } else {
             yAxis.setTickUnit(settings.majorTickSpace);
         }
-        double majorTickCount = settings.maxValue / settings.majorTickSpace;
-        int minorTickCount = (int) (settings.maxValue / majorTickCount / settings.minorTickSpace);
+        double majorTickCount = valueRange / settings.majorTickSpace;
+        int minorTickCount = (int) (valueRange / majorTickCount / settings.minorTickSpace);
         yAxis.setMinorTickCount(minorTickCount);
     }
 

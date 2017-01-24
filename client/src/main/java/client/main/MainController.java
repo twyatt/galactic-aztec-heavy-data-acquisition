@@ -117,6 +117,7 @@ public class MainController {
     private void setupGauges() {
         final GaugeSettings settingsMillivoltsPerVolt = new GaugeSettings()
                 .setUnit("mV/V")
+                .setMinValue(-1)
                 .setMaxValue(8)
                 .setMinorTickSpace(1)
                 .setMajorTickSpace(10)
@@ -125,15 +126,25 @@ public class MainController {
                     add(new Section(7.8125, 8, DANGER_COLOR));
                 }});
 
-        final ValueTranslator forceTranslator = new ValueTranslator(5000f / 3f, 0f);
+        /* Futek LCF450 http://www.futek.com/product.aspx?stock=FSH00130
+         *
+         * Rated Output = 2 mV/V
+         * Capacity = 2000 lb
+         *
+         * w/ Pidget Excitation Voltage of 5 V:
+         * @ 2000 lb => 5 V * 2 mV = 10 mV maximum output from Futek
+         * So, point slope form would be: y = (2000 / 10) * x + 0
+         */
+        final ValueTranslator forceTranslator = new ValueTranslator(2000f / 10f, 0f);
         final GaugeSettings settingsForce = new GaugeSettings()
                 .setUnit("lb")
-                .setMaxValue(8000)
+                .setMinValue(-100)
+                .setMaxValue(3100)
                 .setMinorTickSpace(100)
-                .setMajorTickSpace(1000)
+                .setMajorTickSpace(500)
                 .setSections(new ArrayList<Section>() {{
-                    add(new Section(5000, 7500, WARNING_COLOR));
-                    add(new Section(7500, 8000, DANGER_COLOR));
+                    add(new Section(2000, 3000, WARNING_COLOR));
+                    add(new Section(3000, 3100, DANGER_COLOR));
                 }});
 
         // for debugging (using 5kg load cell, 1.0946 mV/V)
@@ -170,7 +181,7 @@ public class MainController {
                 .styleClass("gauge")
                 .title(label)
                 .unit(settings.unit)
-                .minValue(0)
+                .minValue(settings.minValue)
                 .maxValue(settings.maxValue)
                 .majorTickSpace(settings.majorTickSpace)
                 .minorTickSpace(settings.minorTickSpace)
