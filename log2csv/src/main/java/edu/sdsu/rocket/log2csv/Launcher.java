@@ -12,8 +12,17 @@ public class Launcher {
 			usage();
 			System.exit(1);
 		}
+
+		final File folder;
+		final boolean skipConfig;
+		if (args.length == 2 && args[0].equalsIgnoreCase("--skip-config")) {
+			skipConfig = true;
+			folder = new File(args[1]);
+		} else {
+			folder = new File(args[0]);
+			skipConfig = false;
+		}
 		
-		File folder = new File(args[0]);
 		if (!folder.exists()) {
 			System.err.println("Location not found: " + folder);
 			System.exit(1);
@@ -23,13 +32,16 @@ public class Launcher {
 			System.exit(1);
 		}
 		
-		Converter converter = new Converter(folder);
+		Converter converter = new Converter(folder, skipConfig);
 		converter.convert();
 	}
 
 	private static void usage() {
 		System.out.println("Usage:");
-		System.out.println("  " + NAME + " FOLDER");
+		System.out.println("  " + NAME + " [OPTIONS] FOLDER");
+		System.out.println("Options:");
+		System.out.println("  --skip-config  Skips reading the sensor config;");
+		System.out.println("                 Needed for logs written by the client.");
 		System.out.println();
 	}
 	

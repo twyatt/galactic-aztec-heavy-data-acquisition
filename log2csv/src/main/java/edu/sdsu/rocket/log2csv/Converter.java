@@ -11,9 +11,11 @@ import java.io.IOException;
 public class Converter {
 
     private File location;
+    private final boolean skipConfig;
 
-    public Converter(File location) {
+    public Converter(File location, boolean skipConfig) {
         this.location = location;
+        this.skipConfig = skipConfig;
     }
     
     public void convert() {
@@ -37,12 +39,16 @@ public class Converter {
 
         PhidgetBridgeInputStream in = new PhidgetBridgeInputStream(new FileInputStream(logPath));
 
-        final PhidgetBridgeInputStream.Config config = in.readConfig();
-        System.out.println("config.serialNumber = " + config.serialNumber);
-        System.out.println("config.deviceVersion = " + config.deviceVersion);
-        System.out.println("config.inputCount = " + config.inputCount);
-        System.out.println("config.gain = " + config.gain);
-        System.out.println("config.dataRate = " + config.dataRate);
+        if (skipConfig) {
+            System.out.println("Config: Skipped");
+        } else {
+            final PhidgetBridgeInputStream.Config config = in.readConfig();
+            System.out.println("config.serialNumber = " + config.serialNumber);
+            System.out.println("config.deviceVersion = " + config.deviceVersion);
+            System.out.println("config.inputCount = " + config.inputCount);
+            System.out.println("config.gain = " + config.gain);
+            System.out.println("config.dataRate = " + config.dataRate);
+        }
 
         FileWriter fileWriter = new FileWriter(csvPath);
         CSVWriter csv = new CSVWriter(fileWriter, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER);

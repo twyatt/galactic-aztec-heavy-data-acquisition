@@ -7,6 +7,21 @@ apply plugin: 'java'
  */
 apply plugin: 'javafx-gradle-plugin'
 
+/**
+ * Generate version name using Git tag
+ *
+ * @see <a href="http://ryanharter.com/blog/2013/07/30/automatic-versioning-with-git-and-gradle/">
+ *     Automatic Versioning With Git and Gradle</a>
+ */
+def getVersionName = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'describe', '--tags'
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
 repositories {
     mavenCentral()
 }
@@ -17,7 +32,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.4.1'
+        classpath 'de.dynamicfiles.projects.gradle.plugins:javafx-gradle-plugin:8.7.0'
     }
 }
 
@@ -26,7 +41,12 @@ jfx {
     appName 'DataAcquisitionClientPhidgets'
     vendor 'SDSU Rocket Project'
     jfxMainAppJarName 'data-acquisition-client-phidgets.jar'
-    nativeReleaseVersion null
+    nativeReleaseVersion getVersionName()
+    verbose true
+
+    bundleArguments = [
+        'jnlp.outfile': 'data-acquisition-client-phidgets'
+    ]
 }
 
 dependencies {
