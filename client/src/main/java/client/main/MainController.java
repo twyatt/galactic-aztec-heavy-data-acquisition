@@ -128,14 +128,12 @@ public class MainController {
 
         /* Futek LCF450 http://www.futek.com/product.aspx?stock=FSH00130
          *
-         * Rated Output = 2 mV/V
+         * Rated Output = 2 mV/V (i.e. output @ capacity)
          * Capacity = 2000 lb
          *
-         * w/ Pidget Excitation Voltage of 5 V:
-         * @ 2000 lb => 5 V * 2 mV = 10 mV maximum output from Futek
-         * So, point slope form would be: y = (2000 / 10) * x + 0
+         * (2000 lb) / (2 mV/V) => y = 1000 * x
          */
-        final ValueTranslator forceTranslator = new ValueTranslator(2000f / 10f, 0f);
+        final ValueTranslator forceTranslator = new ValueTranslator(1000f, 0f);
         final GaugeSettings settingsForce = new GaugeSettings()
                 .setUnit("lb")
                 .setMinValue(-100)
