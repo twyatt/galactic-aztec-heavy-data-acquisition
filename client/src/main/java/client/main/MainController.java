@@ -131,9 +131,19 @@ public class MainController {
          * Rated Output = 2 mV/V (i.e. output @ capacity)
          * Capacity = 2000 lb
          *
-         * (2000 lb) / (2 mV/V) => y = 1000 * x
+         * Calibration Data:
+         * Output (mV/V)   Load (lb)
+         *     0.0              0
+         *     0.4627         400
+         *     0.9262         800
+         *     1.3901        1200
+         *     1.8542        1600
+         *     2.3176        2000
+         *
+         * Linear curve fit: y = 862.791 * x + 0.485
+         * https://docs.google.com/spreadsheets/d/1XMN06cI92ah1l_Vc1dmJLuunMsgse7e8xNSH-bHrNUc/edit?usp=sharing
          */
-        final ValueTranslator forceTranslator = new ValueTranslator(1000f, 0f);
+        final ValueTranslator forceTranslator = new ValueTranslator(862.791f, 0.485f);
         final GaugeSettings settingsForce = new GaugeSettings()
                 .setUnit("lb")
                 .setMinValue(-100)

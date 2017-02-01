@@ -21,7 +21,7 @@ public class MockBridgePhidget implements DeviceManager.Device {
         if ((x += 0.01f) > 1000f) x = 0f; // 0 to 1000
         float s = (float) Math.sin(x); // -1 to 1
         float sp = (s / 2f) + 0.5f; // 0 to 1
-        float ratedOutput = sp * 2f; // 0 to 2 (which is full mV/V range of Futek load cell)
+        float ratedOutput = sp * 2.3176f; // 0 to 2.3176 (which is full calibrated mV/V range of Futek load cell)
 
         if (bridgeDataListener != null) {
             BridgeDataEvent event = new BridgeDataEvent(null, 0, ratedOutput);
