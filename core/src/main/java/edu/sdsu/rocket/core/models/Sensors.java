@@ -4,8 +4,8 @@ import edu.sdsu.rocket.core.helpers.AtomicIntFloat;
 
 import java.nio.ByteBuffer;
 
-public class Sensors {
-    
+public class Sensors implements ByteBufferIo {
+
     public final AtomicIntFloat[] analog = new AtomicIntFloat[6]; // mV
     public final GPS gps = new GPS(); // degrees, m
     public final Radio radio = new Radio(); // -dBm
@@ -27,6 +27,7 @@ public class Sensors {
         toByteBuffer(buffer, ALL_MASK);
     }
     
+    @Override
     public void toByteBuffer(ByteBuffer buffer, byte mask) {
         if (mask == 0) mask = ALL_MASK;
         
@@ -60,6 +61,7 @@ public class Sensors {
         fromByteBuffer(buffer, ALL_MASK);
     }
     
+    @Override
     public void fromByteBuffer(ByteBuffer buffer, byte mask) {
         if (mask == 0) mask = ALL_MASK;
         

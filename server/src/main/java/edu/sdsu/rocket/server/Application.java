@@ -11,6 +11,9 @@ import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
+import edu.sdsu.rocket.core.models.Stim300;
+import edu.sdsu.rocket.core.net.DatagramPacketListener;
+import edu.sdsu.rocket.core.net.DatagramServer;
 import edu.sdsu.rocket.core.net.SensorServer;
 import edu.sdsu.rocket.server.devices.ADS1100;
 import edu.sdsu.rocket.server.devices.ADS1115;
@@ -35,6 +38,10 @@ import net.sf.marineapi.provider.event.SatelliteInfoEvent;
 import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 import java.io.*;
+import java.net.DatagramPacket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -51,6 +58,9 @@ public class Application {
     private final Sensors sensors = new Sensors();
     private final SensorServer server = new SensorServer(sensors);
     
+    private final Stim300 stim = new Stim300();
+    private final DatagramServer stimServer = new DatagramServer();
+
     private XTend900 radio;
     private DeviceRunnable transmitter;
     private Watchdog watchdog;
@@ -66,6 +76,7 @@ public class Application {
         setupDevices();
         setupStatusMonitor();
         setupServer(4444);
+        setupStimServer(6666);
     }
 
     protected void setupLogging() throws IOException {
@@ -366,6 +377,22 @@ public class Application {
         server.start(port);
     }
 
+    private void setupStimServer(int port) throws SocketException {
+        stimServer.setListener(new DatagramPacketListener() {
+            @Override
+            public void onPacketReceived(DatagramPacket packet) {
+                SocketAddress address = packet.getSocketAddress();
+                ByteBuffer buffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
+
+                byte mask = buffer.get();
+                stim.fromByteBuffer(buffer, mask);
+
+                System.out.println("Received " + stim + " from " + address);
+            }
+        });
+        stimServer.start(port);
+    }
+
     public void loop() throws IOException {
         handleInput();
     }
@@ -506,6 +533,10 @@ public class Application {
         System.out.println("Stopping server");
         server.stop();
         
+
+        System.out.println("Stopping STIM300 server");
+        stimServer.stop();
+
         if (statusThread != null) {
             System.out.println("Stopping status monitor");
             statusThread.interrupt();

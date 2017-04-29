@@ -1,6 +1,7 @@
 package edu.sdsu.rocket.core.net;
 
 import edu.sdsu.rocket.core.helpers.ByteHelper;
+import edu.sdsu.rocket.core.models.ByteBufferIo;
 import edu.sdsu.rocket.core.models.Sensors;
 
 import java.io.IOException;
@@ -16,10 +17,10 @@ public class SensorServer {
     private final ByteBuffer MESSAGE_BUFFER = ByteBuffer.allocate(BUFFER_SIZE);
     
     private DatagramServer server;
-    private final Sensors sensors;
+    private final ByteBufferIo sensors;
     private boolean debug;
-    
-    public SensorServer(Sensors sensors) {
+
+    public SensorServer(ByteBufferIo sensors) {
         this.sensors = sensors;
     }
     
