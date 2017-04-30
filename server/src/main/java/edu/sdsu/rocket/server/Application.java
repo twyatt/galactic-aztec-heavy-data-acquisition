@@ -10,6 +10,8 @@ import edu.sdsu.rocket.core.helpers.Stopwatch;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
+import edu.sdsu.rocket.core.models.Gps;
+import edu.sdsu.rocket.core.models.ProxyData;
 import edu.sdsu.rocket.core.models.Sensors;
 import edu.sdsu.rocket.core.models.Stim300;
 import edu.sdsu.rocket.core.net.DatagramPacketListener;
@@ -27,56 +29,48 @@ import edu.sdsu.rocket.server.io.radio.XTend900.XTend900Listener;
 import edu.sdsu.rocket.server.io.radio.api.RFModuleStatus;
 import edu.sdsu.rocket.server.io.radio.api.RXPacket;
 import edu.sdsu.rocket.server.io.radio.api.TXStatus;
-import net.sf.marineapi.nmea.event.SentenceEvent;
-import net.sf.marineapi.nmea.event.SentenceListener;
-import net.sf.marineapi.nmea.io.SentenceReader;
-import net.sf.marineapi.provider.PositionProvider;
-import net.sf.marineapi.provider.SatelliteInfoProvider;
-import net.sf.marineapi.provider.event.PositionEvent;
-import net.sf.marineapi.provider.event.ProviderListener;
-import net.sf.marineapi.provider.event.SatelliteInfoEvent;
-import net.sf.marineapi.provider.event.SatelliteInfoListener;
 
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class Application {
-    
+
     private final Stopwatch STOPWATCH = new Stopwatch();
 
     private final Config config;
     private Logger log;
     private final DeviceManager manager;
     private final Reader input = new InputStreamReader(System.in);
-    
+
     private final Sensors sensors = new Sensors();
     private final SensorServer server = new SensorServer(sensors);
-    
-    private final Stim300 stim = new Stim300();
-    private final DatagramServer stimServer = new DatagramServer();
+
+    private final ProxyData proxyData = new ProxyData();
+    private final DatagramServer dataProxyServer = new DatagramServer();
 
     private XTend900 radio;
     private DeviceRunnable transmitter;
     private Watchdog watchdog;
     private Thread statusThread;
-    
+
     public Application(Config config) {
         this.config = config;
         this.manager = new DeviceManager(config.debug);
     }
-    
+
     public void setup() throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         setupLogging();
         setupDevices();
         setupStatusMonitor();
         setupServer(4444);
-        setupStimServer(6666);
+        setupDataProxyServer(6666);
     }
 
     protected void setupLogging() throws IOException {
@@ -93,14 +87,14 @@ public class Application {
 
         System.out.println("Logging started at " + System.nanoTime());
     }
-    
+
     protected void setupDevices() throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         setupADC();
 //        setupGPS();
 //        setupRadio();
 //        setupWatchdog();
     }
-    
+
     private void setupADC() throws IOException, I2CFactory.UnsupportedBusNumberException {
         final ADS1115[] ads1114 = new ADS1115[] {
                 config.test ? new MockADS1115() : new ADS1115(ADS1115.Address.ADDR_GND),
@@ -185,72 +179,7 @@ public class Application {
             }).setFrequency(ads1100[i].getRate().getSamplesPerSecond() * 2);
         }
     }
-    
-    private void setupGPS() throws FileNotFoundException {
-        if (config.test) {
-            System.out.println("Test mode, skipping setup of GPS");
-            return;
-        }
-        System.out.println("Setup GPS");
 
-        FileInputStream in = new FileInputStream("/dev/ttyAMA0");
-        final PrintWriter writer = new PrintWriter(log.create("gps.txt"));
-        
-        SentenceReader reader = new SentenceReader(in);
-        reader.addSentenceListener(new SentenceListener() {
-            @Override
-            public void readingStarted() {
-                System.out.println("GPS reading started");
-            }
-            
-            @Override
-            public void readingStopped() {
-                System.out.println("GPS reading stopped");
-            }
-            
-            @Override
-            public void readingPaused() {
-                System.out.println("GPS reading paused");
-            }
-            
-            @Override
-            public void sentenceRead(SentenceEvent event) {
-                String sentence = event.getSentence().toString();
-                writer.println(sentence);
-            }
-        });
-        
-        PositionProvider position = new PositionProvider(reader);
-        position.addListener(new ProviderListener<PositionEvent>() {
-            @Override
-            public void providerUpdate(PositionEvent event) {
-                double latitude  = event.getPosition().getLatitude();
-                double longitude = event.getPosition().getLongitude();
-                double altitude  = event.getPosition().getAltitude();
-                if (config.debug) {
-                    System.out.println("GPS provider update: latitude=" + latitude + ", longitude=" + longitude + ", altitude=" + altitude);
-                }
-                sensors.gps.set(latitude, longitude, altitude);
-            }
-        });
-        
-        SatelliteInfoProvider satelliteInfo = new SatelliteInfoProvider(reader);
-        satelliteInfo.addListener(new SatelliteInfoListener() {
-            @Override
-            public void providerUpdate(SatelliteInfoEvent event) {
-                int fixStatus  = event.getGpsFixStatus().toInt();
-                int satellites = event.getSatelliteInfo().size();
-                if (config.debug) {
-                    System.out.println("GPS provider update: fix=" + fixStatus + ", satellites=" + satellites);
-                }
-                sensors.gps.setFixStatus(fixStatus);
-                sensors.gps.setSatellites(satellites);
-            }
-        });
-        
-        reader.start();
-    }
-    
     private void setupStatusMonitor() throws FileNotFoundException {
         if (config.disableSystemStatus) {
             return;
@@ -276,7 +205,7 @@ public class Application {
         });
         statusThread.start();
     }
-    
+
     protected void setupRadio() throws IOException, IllegalStateException, InterruptedException {
         System.out.println("Setup Radio [XTend 900]");
 
@@ -377,20 +306,29 @@ public class Application {
         server.start(port);
     }
 
-    private void setupStimServer(int port) throws SocketException {
-        stimServer.setListener(new DatagramPacketListener() {
+    /**
+     * Data proxy server. Listens on specified {@code port} for data to be read into a {@link ProxyData} object. The
+     * data can later be sent on request to the Data Acquisition Client.
+     * <p/>
+     * Per discussion with <a href="mailto:cengelbrecht91@gmail.com">Christian Engelbrecht</a>, they will be creating a
+     * Python script to read data from their STIM300 and GPS units. They will then write the data over UDP to this
+     * "proxy" server, so that the Data Acquisition Client request it over radio transmission (e.g. via XTend 900 units).
+     */
+    private void setupDataProxyServer(int port) throws SocketException {
+        dataProxyServer.setListener(new DatagramPacketListener() {
             @Override
             public void onPacketReceived(DatagramPacket packet) {
                 SocketAddress address = packet.getSocketAddress();
                 ByteBuffer buffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
-
-                byte mask = buffer.get();
-                stim.fromByteBuffer(buffer, mask);
-
-                System.out.println("Received " + stim + " from " + address);
+                try {
+                    proxyData.fromByteBuffer(buffer);
+                    System.out.println("Received " + proxyData + " from " + address);
+                } catch (BufferUnderflowException e) {
+                    System.err.println("Received invalid packet from " + address);
+                }
             }
         });
-        stimServer.start(port);
+        dataProxyServer.start(port);
     }
 
     public void loop() throws IOException {
@@ -453,28 +391,6 @@ public class Application {
             }
             System.out.println(Arrays.toString(a));
             break;
-        case 'g':
-            int localFix = sensors.gps.getFixStatus();
-            String lf;
-            switch (localFix) {
-            case 2:
-                lf = "2D";
-                break;
-            case 3:
-                lf = "3D";
-                break;
-            default:
-                lf = "no fix";
-                break;
-            }
-            System.out.println(
-                    "latitude="  + sensors.gps.getLatitude() + ",\t" +
-                    "longitude=" + sensors.gps.getLongitude() + ",\t" +
-                    "altitude="  + sensors.gps.getAltitude() + " m MSL,\t" +
-                    "fix=" + lf + "\t" +
-                    "satellites=" + sensors.gps.getSatellites()
-                    );
-            break;
         case 'r':
             System.out.println("Signal Strength: -" + sensors.radio.getSignalStrength() + " dBm");
             break;
@@ -524,18 +440,18 @@ public class Application {
 
     private void shutdown() {
         System.out.println("Shutting down");
-        
+
         if (watchdog != null) {
             System.out.println("Stopping watchdog");
             watchdog.stop();
         }
-        
+
         System.out.println("Stopping server");
         server.stop();
-        
+
 
         System.out.println("Stopping STIM300 server");
-        stimServer.stop();
+        dataProxyServer.stop();
 
         if (statusThread != null) {
             System.out.println("Stopping status monitor");
@@ -546,7 +462,7 @@ public class Application {
                 System.err.println(e);
             }
         }
-        
+
         System.out.println("Stopping device manager");
         manager.clear();
 
@@ -557,5 +473,5 @@ public class Application {
 
         System.exit(0);
     }
-    
+
 }

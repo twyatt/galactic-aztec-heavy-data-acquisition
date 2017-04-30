@@ -6,11 +6,11 @@ import java.nio.ByteBuffer;
  * @see <a href="http://www.sensonor.com/media/99614/ts1524.r20%20datasheet%20stim300.pdf">
  *     STIM300 Datasheet</a>
  */
-public class Stim300 implements ByteBufferIo {
+public class Stim300 {
 
-    class Data {
-        int timestamp;
-        float x, y, z;
+    class AxesData {
+        private int timestamp;
+        private float x, y, z;
 
         /** Put data into {@code buffer}. */
         void put(ByteBuffer buffer) {
@@ -40,43 +40,20 @@ public class Stim300 implements ByteBufferIo {
         }
     }
 
-    private final Data gyro = new Data(); // accelerometer x, y, z
-    private final Data acc  = new Data(); // gyro x, y, z
-    private final Data incl = new Data(); // inclination x, y, z
+    private final AxesData gyro = new AxesData(); // accelerometer x, y, z
+    private final AxesData acc  = new AxesData(); // gyro x, y, z
+    private final AxesData incl = new AxesData(); // inclination x, y, z
 
-    private static final byte GYRO_MASK = (byte) 0b0000_0001;
-    private static final byte ACC_MASK  = (byte) 0b0000_0010;
-    private static final byte INCL_MASK = (byte) 0b0000_0100;
-    private static final byte ALL_MASK  = (byte) 0b1111_1111;
-
-    @Override
-    public void toByteBuffer(ByteBuffer buffer, byte mask) {
-        if ((mask & GYRO_MASK) != 0) {
-            gyro.put(buffer);
-        }
-
-        if ((mask & ACC_MASK) != 0) {
-            acc.put(buffer);
-        }
-
-        if ((mask & INCL_MASK) != 0) {
-            incl.put(buffer);
-        }
+    public void toByteBuffer(ByteBuffer buffer) {
+        gyro.put(buffer);
+        acc.put(buffer);
+        incl.put(buffer);
     }
 
-    @Override
-    public void fromByteBuffer(ByteBuffer buffer, byte mask) {
-        if ((mask & GYRO_MASK) != 0) {
-            gyro.get(buffer);
-        }
-
-        if ((mask & ACC_MASK) != 0) {
-            acc.get(buffer);
-        }
-
-        if ((mask & INCL_MASK) != 0) {
-            incl.get(buffer);
-        }
+    public void fromByteBuffer(ByteBuffer buffer) {
+        gyro.get(buffer);
+        acc.get(buffer);
+        incl.get(buffer);
     }
 
     @Override
