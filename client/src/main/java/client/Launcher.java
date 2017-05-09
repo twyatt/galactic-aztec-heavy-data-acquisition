@@ -25,11 +25,14 @@ public class Launcher extends Application {
         final MainController controller = loader.getController();
         controller.setStage(stage);
         Scene scene = new Scene(root);
-        
-        stage.setMinWidth(640);
-        stage.setMinHeight(480);
-        stage.setWidth(1024);
-        stage.setHeight(768);
+
+        // 16:9 aspect ratios
+        // https://en.wikipedia.org/wiki/16:9
+        stage.setMinWidth(720);
+        stage.setMinHeight(405);
+        stage.setWidth(1280);
+        stage.setHeight(720);
+
         stage.setTitle(NAME + " " + BuildConfig.VERSION);
         stage.setScene(scene);
         stage.show();
