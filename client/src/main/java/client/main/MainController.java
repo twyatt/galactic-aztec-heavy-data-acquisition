@@ -43,8 +43,8 @@ public class MainController {
     public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
 
-    private static final int SENSOR_COLUMNS = 3;
-    private GaugeController[] gaugeControllers;
+    private static final int SENSOR_COLUMNS = 4;
+    private GaugeController[] pressureControllers;
 
     private static final String CONNECT    = "Connect";
     private static final String DISCONNECT = "Disconnect";
@@ -70,8 +70,8 @@ public class MainController {
     @FXML private Label latencyLabel;
     @FXML private Label temperatureLabel;
     @FXML private Label signalLabel;
-    @FXML private GridPane gaugePane;
-    @FXML private GridPane chartPane;
+    @FXML private GridPane pressurePane;
+    @FXML private GridPane imuPane;
 
     private static final Format LATENCY_FORMAT = new DecimalFormat("#.#");
     private static final Format TEMPERATURE_FORMAT = new DecimalFormat("#.#");
@@ -110,7 +110,7 @@ public class MainController {
             client.setFrequency(value);
         });
 
-        setupGauges();
+        setupPressures();
         loadSettings();
     }
 
@@ -118,7 +118,7 @@ public class MainController {
         this.stage = stage;
     }
 
-    private void setupGauges() {
+    private void setupPressures() {
         final GaugeSettings voltageSettingsADS1114 = new GaugeSettings()
                 .setUnit("mV")
                 .setMaxValue(5500)
@@ -138,7 +138,7 @@ public class MainController {
                     add(new Section(5200, 5500, DANGER_COLOR));
                 }});
 
-        gaugeControllers = new GaugeController[] {
+        pressureControllers = new GaugeController[] {
                 new GaugeController("A0: LOX")
                         .setTranslator(PressureValueTranslatorFactory.getLOX())
                         .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1114)
@@ -174,38 +174,26 @@ public class MainController {
                                 .setMaxValue(1000)
                                 .setMinorTickSpace(10)
                                 .setMajorTickSpace(100)),
-
-                new GaugeController("A4: RCS Low")
-                        .setTranslator(PressureValueTranslatorFactory.getRcsLow())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(1000)
-                                .setMinorTickSpace(10)
-                                .setMajorTickSpace(100)),
-
-                new GaugeController("A5: RCS High")
-                        .setTranslator(PressureValueTranslatorFactory.getRcsHigh())
-                        .putSettings(GaugeController.Mode.RAW, voltageSettingsADS1100)
-                        .putSettings(GaugeController.Mode.TRANSLATED, new GaugeSettings()
-                                .setUnit("PSI")
-                                .setMaxValue(5000)
-                                .setMinorTickSpace(50)
-                                .setMajorTickSpace(500)),
         };
 
-        for (int i = 0; i < gaugeControllers.length; i++) {
-            GaugeController controller = gaugeControllers[i];
+        // Line charts are defined in FXML on the 2nd row (below what will be the first row of gauges) w/ their indices
+        // starting at 0, so we loop over to set the chart to the appropriate controller.
+        for (int i = 0; i < pressureControllers.length; i++) {
+            GaugeController controller = pressureControllers[i];
+            LineChart<Number, Number> chart = (LineChart<Number, Number>) pressurePane.getChildren().get(i);
+            controller.setChart(chart);
+        }
+
+        // Loop over the controllers again to add the gauges to the first row and associate them with the controller.
+        for (int i = 0; i < pressureControllers.length; i++) {
+            GaugeController controller = pressureControllers[i];
 
             int row = i / SENSOR_COLUMNS;
             int col = i % SENSOR_COLUMNS;
             Gauge gauge = makePressureGauge(controller.getLabel(), controller.getActiveSettings());
             controller.setGauge(gauge);
 
-            gaugePane.add(gauge, col, row);
-
-            LineChart<Number, Number> chart = (LineChart<Number, Number>) chartPane.getChildren().get(i);
-            controller.setChart(chart);
+            pressurePane.add(gauge, col, row);
         }
     }
 
@@ -272,8 +260,8 @@ public class MainController {
             long raw = sensors.analog[i].get();
             float value = AtomicIntFloat.getFloatValue(raw);
 
-            if (i < gaugeControllers.length) {
-                GaugeController gaugeController = gaugeControllers[i];
+            if (i < pressureControllers.length) {
+                GaugeController gaugeController = pressureControllers[i];
                 gaugeController.setValue(value);
             }
 
@@ -313,7 +301,7 @@ public class MainController {
     }
 
     private void setMode(GaugeController.Mode mode) {
-        for (GaugeController gaugeController : gaugeControllers) {
+        for (GaugeController gaugeController : pressureControllers) {
             gaugeController.setMode(mode);
         }
     }
