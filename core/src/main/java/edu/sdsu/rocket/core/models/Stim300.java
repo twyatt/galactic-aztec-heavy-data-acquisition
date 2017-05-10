@@ -8,7 +8,33 @@ import java.nio.ByteBuffer;
  */
 public class Stim300 {
 
-    class AxesData {
+    public class AxesData {
+        private int timestamp;
+        private float x, y, z;
+
+        public int timestamp() {
+            return timestamp;
+        }
+
+        public float x() {
+            return x;
+        }
+
+        public float y() {
+            return y;
+        }
+
+        public float z() {
+            return z;
+        }
+
+        @Override
+        public String toString() {
+            return "[t=" + timestamp + ", x=" + x + ", y=" + y + ", z=" + z + "]";
+        }
+    }
+
+    class AxesDataIo {
         private int timestamp;
         private float x, y, z;
 
@@ -32,6 +58,17 @@ public class Stim300 {
             }
         }
 
+        public AxesData read() {
+            AxesData obj = new AxesData();
+            synchronized (this) {
+                obj.timestamp = this.timestamp;
+                obj.x = this.x;
+                obj.y = this.y;
+                obj.z = this.z;
+            }
+            return obj;
+        }
+
         @Override
         public String toString() {
             synchronized (this) {
@@ -40,9 +77,9 @@ public class Stim300 {
         }
     }
 
-    private final AxesData gyro = new AxesData(); // accelerometer x, y, z
-    private final AxesData acc  = new AxesData(); // gyro x, y, z
-    private final AxesData incl = new AxesData(); // inclination x, y, z
+    private final AxesDataIo gyro = new AxesDataIo(); // accelerometer x, y, z
+    private final AxesDataIo acc  = new AxesDataIo(); // gyro x, y, z
+    private final AxesDataIo incl = new AxesDataIo(); // inclination x, y, z
 
     public void toByteBuffer(ByteBuffer buffer) {
         gyro.put(buffer);
@@ -54,6 +91,18 @@ public class Stim300 {
         gyro.get(buffer);
         acc.get(buffer);
         incl.get(buffer);
+    }
+
+    public AxesData gyroscope() {
+        return gyro.read();
+    }
+
+    public AxesData accelerometer() {
+        return acc.read();
+    }
+
+    public AxesData inclinometer() {
+        return incl.read();
     }
 
     @Override

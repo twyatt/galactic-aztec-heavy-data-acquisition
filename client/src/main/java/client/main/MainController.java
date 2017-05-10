@@ -6,6 +6,7 @@ import edu.sdsu.rocket.core.helpers.Logger;
 import edu.sdsu.rocket.core.helpers.PressureValueTranslatorFactory;
 import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
 import edu.sdsu.rocket.core.models.Sensors;
+import edu.sdsu.rocket.core.models.Stim300;
 import edu.sdsu.rocket.core.net.SensorClient;
 import eu.hansolo.enzo.common.Section;
 import eu.hansolo.enzo.gauge.Gauge;
@@ -13,6 +14,7 @@ import eu.hansolo.enzo.gauge.GaugeBuilder;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
@@ -43,8 +45,10 @@ public class MainController {
     public static final Color WARNING_COLOR = Color.YELLOW;
     public static final Color DANGER_COLOR  = Color.RED;
 
-    private static final int SENSOR_COLUMNS = 4;
+    private static final int PRESSURE_COLUMNS = 4;
     private GaugeController[] pressureControllers;
+
+    private GraphController[] imuControllers;
 
     private static final String CONNECT    = "Connect";
     private static final String DISCONNECT = "Disconnect";
@@ -70,6 +74,7 @@ public class MainController {
     @FXML private Label latencyLabel;
     @FXML private Label temperatureLabel;
     @FXML private Label signalLabel;
+
     @FXML private GridPane pressurePane;
     @FXML private GridPane imuPane;
 
@@ -111,6 +116,7 @@ public class MainController {
         });
 
         setupPressures();
+        setupImu();
         loadSettings();
     }
 
@@ -188,12 +194,25 @@ public class MainController {
         for (int i = 0; i < pressureControllers.length; i++) {
             GaugeController controller = pressureControllers[i];
 
-            int row = i / SENSOR_COLUMNS;
-            int col = i % SENSOR_COLUMNS;
+            int row = i / PRESSURE_COLUMNS;
+            int col = i % PRESSURE_COLUMNS;
             Gauge gauge = makePressureGauge(controller.getLabel(), controller.getActiveSettings());
             controller.setGauge(gauge);
 
             pressurePane.add(gauge, col, row);
+        }
+    }
+
+    private void setupImu() {
+        imuControllers = new GraphController[] {
+            new GraphController(),
+            new GraphController(),
+            new GraphController(),
+        };
+
+        for (int i = 0; i < imuControllers.length; i++) {
+            LineChart<Number, Number> graph = (LineChart<Number, Number>) imuPane.getChildren().get(i);
+            imuControllers[i].bind(graph);
         }
     }
 
@@ -218,16 +237,20 @@ public class MainController {
     }
 
     private void updateSensors(byte mask) {
-        if ((mask & Sensors.RADIO_MASK) != 0) {
-            updateSignalStrength();
-        }
-
         if ((mask & Sensors.ANALOG_MASK) != 0) {
             onAnalogSensorsUpdated();
         }
 
+        if ((mask & Sensors.PROXY_MASK) != 0) {
+            onProxySensorsUpdated();
+        }
+
         if ((mask & Sensors.SYSTEM_MASK) != 0) {
             updateTemperature();
+        }
+
+        if ((mask & Sensors.RADIO_MASK) != 0) {
+            updateSignalStrength();
         }
     }
 
@@ -270,6 +293,18 @@ public class MainController {
                 writeSensor(i, timestamp, value);
             }
         }
+    }
+
+    private void onProxySensorsUpdated() {
+        Stim300 stim300 = sensors.proxy.stim300();
+
+        Stim300.AxesData gyroscope = stim300.gyroscope();
+        Stim300.AxesData accelerometer = stim300.accelerometer();
+        Stim300.AxesData inclinometer = stim300.inclinometer();
+
+        imuControllers[0].update(gyroscope.x(), gyroscope.y(), gyroscope.z());
+        imuControllers[1].update(accelerometer.x(), accelerometer.y(), accelerometer.z());
+        imuControllers[2].update(inclinometer.x(), inclinometer.y(), inclinometer.z());
     }
 
     private void writeSensor(int i, long timestamp, float value) {

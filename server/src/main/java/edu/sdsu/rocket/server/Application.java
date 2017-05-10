@@ -52,7 +52,6 @@ public class Application {
     private final Sensors sensors = new Sensors();
     private final SensorServer server = new SensorServer(sensors);
 
-    private final ProxyData proxyData = new ProxyData();
     private final DatagramServer dataProxyServer = new DatagramServer();
 
     private XTend900 radio;
@@ -321,8 +320,7 @@ public class Application {
                 SocketAddress address = packet.getSocketAddress();
                 ByteBuffer buffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
                 try {
-                    proxyData.fromByteBuffer(buffer);
-                    System.out.println("Received " + proxyData + " from " + address);
+                    sensors.proxy.fromByteBuffer(buffer);
                 } catch (BufferUnderflowException e) {
                     System.err.println("Received invalid packet from " + address);
                 }
