@@ -1,12 +1,12 @@
-package edu.sdsu.rocket.server.io.radio;
+package edu.sdsu.rocket.pi.io.radio;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import edu.sdsu.rocket.core.models.Sensors;
-import edu.sdsu.rocket.server.devices.DeviceManager.Device;
+import edu.sdsu.rocket.pi.devices.DeviceManager;
 
-public class SensorsTransmitter implements Device {
+public class SensorsTransmitter implements DeviceManager.Device {
 	
 	static final int BUFFER_SIZE = XTend900.BUFFER_SIZE;
 	private static final ByteBuffer WRITE_BUFFER = ByteBuffer.allocate(BUFFER_SIZE);

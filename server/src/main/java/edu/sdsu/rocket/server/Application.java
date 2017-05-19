@@ -10,25 +10,21 @@ import edu.sdsu.rocket.core.helpers.Stopwatch;
 import edu.sdsu.rocket.core.io.OutputStreamMultiplexer;
 import edu.sdsu.rocket.core.io.StatusOutputStream;
 import edu.sdsu.rocket.core.io.devices.ADS11xxOutputStream;
-import edu.sdsu.rocket.core.models.Gps;
 import edu.sdsu.rocket.core.models.ProxyData;
 import edu.sdsu.rocket.core.models.Sensors;
-import edu.sdsu.rocket.core.models.Stim300;
 import edu.sdsu.rocket.core.net.DatagramPacketListener;
 import edu.sdsu.rocket.core.net.DatagramServer;
 import edu.sdsu.rocket.core.net.SensorServer;
-import edu.sdsu.rocket.server.devices.ADS1100;
-import edu.sdsu.rocket.server.devices.ADS1115;
-import edu.sdsu.rocket.server.devices.DeviceManager;
-import edu.sdsu.rocket.server.devices.DeviceManager.DeviceRunnable;
-import edu.sdsu.rocket.server.devices.mock.MockADS1100;
-import edu.sdsu.rocket.server.devices.mock.MockADS1115;
-import edu.sdsu.rocket.server.io.radio.*;
-import edu.sdsu.rocket.server.io.radio.Watchdog.WatchdogListener;
-import edu.sdsu.rocket.server.io.radio.XTend900.XTend900Listener;
-import edu.sdsu.rocket.server.io.radio.api.RFModuleStatus;
-import edu.sdsu.rocket.server.io.radio.api.RXPacket;
-import edu.sdsu.rocket.server.io.radio.api.TXStatus;
+import edu.sdsu.rocket.pi.Pi;
+import edu.sdsu.rocket.pi.devices.ADS1100;
+import edu.sdsu.rocket.pi.devices.ADS1115;
+import edu.sdsu.rocket.pi.devices.DeviceManager;
+import edu.sdsu.rocket.pi.devices.mock.MockADS1100;
+import edu.sdsu.rocket.pi.devices.mock.MockADS1115;
+import edu.sdsu.rocket.pi.io.radio.*;
+import edu.sdsu.rocket.pi.io.radio.api.RFModuleStatus;
+import edu.sdsu.rocket.pi.io.radio.api.RXPacket;
+import edu.sdsu.rocket.pi.io.radio.api.TXStatus;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -55,7 +51,7 @@ public class Application {
     private final DatagramServer dataProxyServer = new DatagramServer();
 
     private XTend900 radio;
-    private DeviceRunnable transmitter;
+    private DeviceManager.DeviceRunnable transmitter;
     private Watchdog watchdog;
     private Thread statusThread;
 
@@ -90,7 +86,7 @@ public class Application {
     protected void setupDevices() throws IOException, InterruptedException, I2CFactory.UnsupportedBusNumberException {
         setupADC();
 //        setupGPS();
-//        setupRadio();
+        setupRadio();
 //        setupWatchdog();
     }
 
@@ -122,7 +118,7 @@ public class Application {
             }
 
             final int index = i;
-            DeviceRunnable deviceRunnable = manager.add(new DeviceManager.Device() {
+            DeviceManager.DeviceRunnable deviceRunnable = manager.add(new DeviceManager.Device() {
                 @Override
                 public void loop() throws IOException, InterruptedException {
                     long timestamp = STOPWATCH.nanoSecondsElapsed();
@@ -229,7 +225,7 @@ public class Application {
         radio.setup();
         radio.setLogOutputStream(log.create("xtend900.log"));
         if (watchdog != null) {
-            radio.addListener(new XTend900Listener() {
+            radio.addListener(new XTend900.XTend900Listener() {
                 @Override
                 public void onRadioTurnedOff() {
                     System.out.println("Watchdog disabled");
@@ -285,7 +281,7 @@ public class Application {
         System.out.println("Setup watchdog for XTend 900");
 
         watchdog = new Watchdog(30);
-        watchdog.setListener(new WatchdogListener() {
+        watchdog.setListener(new Watchdog.WatchdogListener() {
             @Override
             public void triggered() {
                 if (config.debug) System.out.println("Watchdog triggered!");
@@ -321,6 +317,7 @@ public class Application {
                 ByteBuffer buffer = ByteBuffer.wrap(packet.getData(), 0, packet.getLength());
                 try {
                     sensors.proxy.fromByteBuffer(buffer);
+                    System.out.println("Received " + sensors.proxy + " from " + address);
                 } catch (BufferUnderflowException e) {
                     System.err.println("Received invalid packet from " + address);
                 }

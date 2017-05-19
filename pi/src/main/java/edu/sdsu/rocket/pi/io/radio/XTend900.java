@@ -1,11 +1,11 @@
-package edu.sdsu.rocket.server.io.radio;
+package edu.sdsu.rocket.pi.io.radio;
 
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataEventListener;
-import edu.sdsu.rocket.server.io.radio.api.APIFrame;
-import edu.sdsu.rocket.server.io.radio.api.TXRequest;
+import edu.sdsu.rocket.pi.io.radio.api.APIFrame;
+import edu.sdsu.rocket.pi.io.radio.api.TXRequest;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -1,4 +1,4 @@
-package edu.sdsu.rocket.server.devices;
+package edu.sdsu.rocket.pi.devices;
 
 import edu.sdsu.rocket.core.helpers.RateLimitedRunnable;
 

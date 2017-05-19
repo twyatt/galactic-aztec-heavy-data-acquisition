@@ -1,4 +1,4 @@
-package edu.sdsu.rocket.server.io.radio.api;
+package edu.sdsu.rocket.pi.io.radio.api;
 
 /*
  * Start Delimiter |   Length  |        Frame Data      | Checksum

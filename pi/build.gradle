@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'application'
 
 repositories {
     maven {
@@ -7,10 +6,8 @@ repositories {
     }
 }
 
-mainClassName = 'edu.sdsu.rocket.server.Launcher'
-
 dependencies {
-    compile project(':pi')
+    compile project(':core')
 
     compile('com.pi4j:pi4j-core:1.1') {
         exclude module: 'pi4j-native'

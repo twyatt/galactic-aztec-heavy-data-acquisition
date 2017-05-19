@@ -1,6 +1,6 @@
-package edu.sdsu.rocket.server.devices.mock;
+package edu.sdsu.rocket.pi.devices.mock;
 
-import edu.sdsu.rocket.server.devices.ADS1100;
+import edu.sdsu.rocket.pi.devices.ADS1100;
 
 import java.io.IOException;
 

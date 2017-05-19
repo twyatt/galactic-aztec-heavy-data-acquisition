@@ -1,4 +1,6 @@
 include 'core'
+include 'pi'
 include 'server'
 include 'client'
+include 'proxy'
 include 'log2csv'

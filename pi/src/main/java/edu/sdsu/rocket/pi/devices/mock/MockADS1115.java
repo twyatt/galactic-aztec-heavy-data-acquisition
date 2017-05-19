@@ -1,8 +1,8 @@
-package edu.sdsu.rocket.server.devices.mock;
+package edu.sdsu.rocket.pi.devices.mock;
+
+import edu.sdsu.rocket.pi.devices.ADS1115;
 
 import java.io.IOException;
-
-import edu.sdsu.rocket.server.devices.ADS1115;
 
 public class MockADS1115 extends ADS1115 {
 

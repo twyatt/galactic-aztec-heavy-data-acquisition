@@ -1,4 +1,4 @@
-package edu.sdsu.rocket.server.devices;
+package edu.sdsu.rocket.pi.devices;
 
 import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CDevice;
